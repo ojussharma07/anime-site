@@ -151,6 +151,13 @@
                         `;
 
                         rowItem.addEventListener('click', () => {
+                                                                 // Save to History
+                               const history = JSON.parse(localStorage.getItem('animeHistory') || '[]');
+                         const historyItem = { id: malId, title: title, ep: ep.mal_id, img: imgUrl };
+                     // Remove if exists, then add to front
+                            const filteredHistory = history.filter(h => h.id !== malId);
+                            filteredHistory.unshift(historyItem);
+                            localStorage.setItem('animeHistory', JSON.stringify(filteredHistory.slice(0, 20))); // Keep last 20
                             Array.from(queueListContainer.children).forEach(c => c.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition bg-zinc-900/30 border-zinc-900 text-zinc-300");
                             rowItem.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition bg-indigo-600/10 border-indigo-500/30 text-indigo-400";
                             countBadge.textContent = `${ep.mal_id < 10 ? '0' + ep.mal_id : ep.mal_id} / ${episodes.length}`;
