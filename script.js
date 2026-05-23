@@ -191,17 +191,27 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     } else if (genreIdQuery && genreNameQuery) {
         fetchByGenre(genreIdQuery, genreNameQuery.replace(/_/g, ' '));
+        
+    // --- THE NEW RELEASES & VIEW ROUTER ---
+    } else if (viewQuery === 'new') {
+        // Fetches the current season (Newly Released / Airing right now)
+        fetchSpecialView("Newly Released", "https://api.jikan.moe/v4/seasons/now?limit=24");
+        
     } else if (viewQuery === 'ongoing') {
-        fetchSpecialView("Ongoing Anime", "https://api.jikan.moe/v4/seasons/now?limit=24");
+        // Fetches all top airing anime regardless of season
+        fetchSpecialView("Top Ongoing Anime", "https://api.jikan.moe/v4/anime?status=airing&order_by=score&sort=desc&limit=24");
+        
     } else if (viewQuery === 'upcoming') {
-        fetchSpecialView("New Releases", "https://api.jikan.moe/v4/seasons/upcoming?limit=24");
+        // Fetches anime that haven't aired yet
+        fetchSpecialView("Upcoming Releases", "https://api.jikan.moe/v4/seasons/upcoming?limit=24");
+        
     } else if (viewQuery === 'movies') {
-        fetchSpecialView("Anime Movies", "https://api.jikan.moe/v4/anime?type=movie&order_by=popularity&sort=asc&limit=24");
-    } else if (viewQuery === 'recent') {
-        fetchSpecialView("Recently Updated", "https://api.jikan.moe/v4/seasons/now?limit=24");
+        fetchSpecialView("Anime Movies", "https://api.jikan.moe/v4/anime?type=movie&order_by=popularity&sort=desc&limit=24");
+        
     } else if (viewQuery === 'shuffle') {
         const randomPage = Math.floor(Math.random() * 10) + 1;
         fetchSpecialView("Random Selection", `https://api.jikan.moe/v4/top/anime?limit=24&page=${randomPage}`);
+        
     } else {
         loadTopAnime();
     }
