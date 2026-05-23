@@ -82,6 +82,26 @@
                 const anime = data.data;
                 const title = anime.title;
                 const coverImg = anime.images?.jpg?.large_image_url || '';
+
+                // --- SAVE TO LOCAL HISTORY ---
+                let history = JSON.parse(localStorage.getItem('animeHistory') || '[]');
+                
+                // Remove the anime if it's already in history (to move it to the front)
+                history = history.filter(item => item.mal_id !== anime.mal_id);
+                
+                // Add to the very front of the array
+                history.unshift({
+                    mal_id: anime.mal_id,
+                    title: title,
+                    img: coverImg
+                });
+                
+                // Cap the history list at 30 items so it doesn't break the browser
+                if (history.length > 30) history.pop();
+                
+                // Save it back
+                localStorage.setItem('animeHistory', JSON.stringify(history));
+                // -----------------------------
                 
                 document.title = `${title} — Anime.TV`;
                 document.getElementById('anime-title').textContent = title;
