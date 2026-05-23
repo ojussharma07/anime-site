@@ -3,122 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stream Core Interface</title>
+    <title>Anime.TV — Stream Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <style>
-        /* Customize Plyr theme colors to match a neutral sleek styling interface */
+        /* Modern minimalist customization matching premium dark mode layouts */
         .plyr--full-ui input[type=range] { color: #6366f1; }
         .plyr__control--overlaid { background: #6366f1; }
         .plyr__accent { background: #6366f1; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
     </style>
 </head>
-<body class="bg-[#09090b] text-zinc-100 font-sans min-h-screen selection:bg-indigo-500 selection:text-white pb-24">
+<body class="bg-[#09090b] text-zinc-100 font-sans min-h-screen selection:bg-indigo-500 selection:text-white overflow-x-hidden">
 
-    <header class="p-4 md:p-6 max-w-6xl mx-auto flex items-center justify-between">
-        <a href="index.html" class="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition text-xs font-semibold bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-xl">
-            ← Back to Dashboard
-        </a>
+    <header class="w-full bg-[#09090b]/80 backdrop-blur-md border-b border-zinc-900 sticky top-0 z-50 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <a href="index.html" class="text-zinc-400 hover:text-white text-sm font-medium transition flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg">
+                    ← Home
+                </a>
+                <span class="text-zinc-700">|</span>
+                <span id="header-anime-title" class="text-xs md:text-sm font-bold tracking-tight text-zinc-300 truncate max-w-[200px] md:max-w-md">Loading Title...</span>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider hidden sm:inline">Server Source:</span>
+                <select id="server-select" class="bg-zinc-900 border border-zinc-800 text-xs font-semibold rounded-lg px-2.5 py-1.5 text-zinc-200 focus:outline-none focus:border-indigo-500 cursor-pointer">
+                    <option value="gogoplay">GogoPlay (Default)</option>
+                    <option value="vidstreaming">Vidstreaming (Auto)</option>
+                    <option value="streamsb">StreamSB (Backup)</option>
+                </select>
+            </div>
+        </div>
     </header>
 
-    <main class="max-w-6xl mx-auto px-4 space-y-8">
+    <main class="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
         
-        <div class="rounded-2xl overflow-hidden bg-black border border-zinc-800/80 shadow-2xl relative aspect-video w-full">
-            <video id="player" playsinline controls>
-                <source src="https://vjs.zencdn.net/v/oceans.mp4" type="video/mp4" />
-            </video>
-        </div>
+        <div class="lg:col-span-3 space-y-4">
+            <div class="rounded-2xl overflow-hidden bg-black border border-zinc-800 shadow-2xl aspect-video w-full relative">
+                <video id="player" playsinline controls>
+                    <source src="https://vjs.zencdn.net/v/oceans.mp4" type="video/mp4" />
+                </video>
+            </div>
 
-        <div class="border-b border-zinc-800/80 pb-6">
-            <h1 id="anime-title" class="text-2xl md:text-4xl font-black tracking-tight mb-2">Loading Stream Data...</h1>
-            <div class="flex items-center gap-3 text-xs text-zinc-400">
-                <span class="text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/10">IMDb 8.7</span>
-                <span>2026</span>
-                <span>12 Episodes Indexed</span>
-                <span class="bg-zinc-800 text-zinc-300 px-1.5 py-0.5 rounded font-mono text-[10px]">U/A 7+</span>
+            <div class="bg-zinc-900/30 border border-zinc-900 rounded-xl p-5 space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h1 id="main-anime-title" class="text-xl md:text-2xl font-black tracking-tight">Loading Title Metadata...</h1>
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold px-2.5 py-0.5 rounded-md">AniList Linked</span>
+                        <span id="stream-status-badge" class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold px-2.5 py-0.5 rounded-md">Consumet API Online</span>
+                    </div>
+                </div>
+                <p id="anime-synopsis" class="text-xs md:text-sm text-zinc-400 leading-relaxed line-clamp-3">Synchronizing index logs with external database tables. Information parameters will print immediately following verification hooks...</p>
             </div>
         </div>
 
-        <div>
-            <div class="flex items-center gap-6 border-b border-zinc-900 text-sm font-bold mb-6">
-                <span class="text-white border-b-2 border-white pb-3 cursor-pointer">Episodes</span>
-                <span class="text-zinc-500 hover:text-zinc-300 pb-3 cursor-pointer transition">Related Shows</span>
-                <span class="text-zinc-500 hover:text-zinc-300 pb-3 cursor-pointer transition">Details Info</span>
+        <div class="lg:col-span-1 flex flex-col h-[50vh] lg:h-[75vh] bg-zinc-900/20 border border-zinc-900/60 rounded-2xl overflow-hidden">
+            <div class="p-4 border-b border-zinc-900 flex justify-between items-center bg-zinc-900/40">
+                <h2 class="text-sm font-black tracking-wide uppercase text-zinc-400">Episode Queue</h2>
+                <span id="episode-count-badge" class="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded font-mono font-bold">01 / 12</span>
             </div>
 
-            <div id="episode-list" class="space-y-4">
-                <p class="text-xs text-zinc-500">Compiling episode indexes...</p>
+            <div id="episode-scroll-list" class="flex-1 overflow-y-auto p-3 space-y-2">
+                <p class="text-xs text-zinc-600 text-center py-8">Parsing streaming directories...</p>
             </div>
         </div>
+
     </main>
 
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
+        // 1. Gather deep query metrics from landing route paths
         const urlParams = new URLSearchParams(window.location.search);
-        const title = urlParams.get('title') || 'Unknown Anime Title';
+        const title = urlParams.get('title') || 'Selected Anime Streaming Series';
         const imgUrl = urlParams.get('img') || '';
 
-        document.getElementById('anime-title').textContent = title;
-        document.title = `Streaming: ${title}`;
+        // Print static elements to layout tree structure
+        document.getElementById('header-anime-title').textContent = title;
+        document.getElementById('main-anime-title').textContent = title;
+        document.title = `Watch ${title} — Anime.TV`;
 
-        const mainPlayerElement = document.getElementById('player');
-        const videoSourceElement = mainPlayerElement.querySelector('source');
+        const mainVideoNode = document.getElementById('player');
+        const internalVideoSource = mainVideoNode.querySelector('source');
 
+        // Initialize Plyr Custom Controls wrapper layout skins
         const player = new Plyr('#player', {
-            controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'captions', 'settings', 'fullscreen']
+            controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'fullscreen']
         });
 
-        // Mock stream database object directory mapping paths to the custom list
-        const streamDatabase = {
-            "demo_files": [
-                "https://vjs.zencdn.net/v/oceans.mp4",
-                "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-            ]
-        };
-
-        // Standardized mock copy content to populate text layout exactly like the screenshot patterns
-        const sampleEpisodeDescriptions = [
-            "The story centers around a critical crossroad event as forces orchestrate unexpected maneuvers under dark horizons.",
-            "Accelerated timelines force the core operational team to adapt strategies inside highly hostile environments.",
-            "Tensions escalate beyond standard operational tolerance guidelines as long-standing alliances split cleanly in half."
+        // 2. Local fallback mock link data matching architecture mapping schemas
+        const openTestFiles = [
+            "https://vjs.zencdn.net/v/oceans.mp4",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
         ];
 
-        const epContainer = document.getElementById('episode-list');
-        epContainer.innerHTML = ''; // Wipe loading placeholder layouts
+        // 3. Automated Population of the Episode Queue List layout directly matching screenshot patterns
+        const queueListContainer = document.getElementById('episode-scroll-list');
+        const countBadge = document.getElementById('episode-count-badge');
+        
+        queueListContainer.innerHTML = ''; // Wipe loading templates
+        countBadge.textContent = `01 / 12`;
 
-        // Generate 3 wide card episode blocks exactly mimicking the Steins;Gate screenshot design
-        for (let i = 1; i <= 3; i++) {
-            const card = document.createElement('div');
-            card.className = "flex flex-col sm:flex-row gap-4 p-4 rounded-xl bg-zinc-900/40 border border-zinc-900 hover:bg-zinc-900/80 hover:border-zinc-800 transition duration-300 group";
+        // Loop to compile 12 sleek episode item listings matching your image layout design
+        for (let i = 1; i <= 12; i++) {
+            const rowItem = document.createElement('button');
+            rowItem.className = `w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition duration-200 group relative ${
+                i === 1 
+                ? 'bg-indigo-600/10 border-indigo-500/30 text-indigo-400' 
+                : 'bg-zinc-900/30 border-zinc-900 hover:bg-zinc-900/80 hover:border-zinc-800 text-zinc-300'
+            }`;
 
-            card.innerHTML = `
-                <div class="relative w-full sm:w-52 aspect-video rounded-lg overflow-hidden bg-zinc-800 shrink-0">
-                    <img src="${imgUrl || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=300'}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300 opacity-80">
-                    <div class="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition">
-                        <div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white font-bold text-sm shadow-md group-hover:bg-indigo-600 group-hover:border-indigo-500 group-hover:scale-110 transition duration-300">▶</div>
-                    </div>
+            rowItem.innerHTML = `
+                <div class="w-20 aspect-video bg-zinc-800 rounded-lg overflow-hidden shrink-0 relative">
+                    <img src="${imgUrl || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=150'}" class="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition">
+                    <div class="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white bg-black/20">▶</div>
                 </div>
-                <div class="flex-1 flex flex-col justify-center">
-                    <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
-                        <h3 class="font-bold text-sm md:text-base text-zinc-100 group-hover:text-indigo-400 transition">S1 E${i} — Operational Threshold ${i * 4}</h3>
-                        <span class="text-[10px] bg-zinc-800 text-zinc-400 font-mono px-2 py-0.5 rounded">★ 4.${i+5} Rating</span>
-                    </div>
-                    <p class="text-xs text-zinc-500 mb-2 font-medium">Apr ${i * 3}, 2011 • 24min</p>
-                    <p class="text-xs text-zinc-400 line-clamp-2 leading-relaxed">${sampleEpisodeDescriptions[i-1]}</p>
+                <div class="truncate">
+                    <h4 class="font-bold text-xs group-hover:text-white truncate">Episode ${i}</h4>
+                    <p class="text-[10px] text-zinc-500 mt-0.5 truncate">Subtitled • 24 mins</p>
                 </div>
             `;
 
-            // When user clicks the episode card layout, alternate video links safely
-            card.addEventListener('click', () => {
-                const targetStream = (i % 2 === 0) ? streamDatabase.demo_files[1] : streamDatabase.demo_files[0];
-                videoSourceElement.src = targetStream;
-                mainPlayerElement.load();
+            // Setup dynamic click behaviors for individual streaming track list changes
+            rowItem.addEventListener('click', () => {
+                // Remove visual active styling borders from all other sibling elements inside container
+                Array.from(queueListContainer.children).forEach(child => {
+                    child.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition duration-200 group bg-zinc-900/30 border-zinc-900 hover:bg-zinc-900/80 hover:border-zinc-800 text-zinc-300";
+                });
+
+                // Apply active accent styles to the specific item clicked by the user
+                rowItem.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition duration-200 group bg-indigo-600/10 border-indigo-500/30 text-indigo-400";
+                countBadge.textContent = `${i < 10 ? '0' + i : i} / 12`;
+
+                // Alternate sample stream resources based on choice parameters
+                internalVideoSource.src = (i % 2 === 0) ? openTestFiles[1] : openTestFiles[0];
+                mainVideoNode.load();
                 player.play();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
             });
 
-            epContainer.appendChild(card);
+            queueListContainer.appendChild(rowItem);
         }
+
+        // 4. Server switcher alert integration matching screenshot selectors
+        document.getElementById('server-select').addEventListener('change', (e) => {
+            alert(`Switched streaming parsing target route to: ${e.target.value.toUpperCase()} Server Protocol.`);
+        });
     </script>
 </body>
 </html>
