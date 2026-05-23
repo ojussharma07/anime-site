@@ -2,17 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anime.TV — History</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-[#09090b] text-zinc-100 min-h-screen p-8">
-    <div class="max-w-4xl mx-auto">
-        <h1 class="text-3xl font-black mb-8 border-b border-zinc-800 pb-4">Your Watch History</h1>
-        <div id="history-grid" class="flex flex-col gap-4">
-            <p class="text-zinc-500">No watch history found.</p>
+<body class="bg-[#09090b] text-zinc-100 min-h-screen">
+    
+    <header class="w-full border-b border-zinc-900 p-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <span class="text-2xl font-black text-white cursor-pointer" onclick="window.location.href='home.html'">Anime<span class="text-indigo-500">.TV</span></span>
+            <a href="home.html" class="text-zinc-400 hover:text-white font-bold">← Back to Home</a>
         </div>
-        <a href="home.html" class="mt-8 inline-block text-indigo-400 hover:text-indigo-300 font-bold">&larr; Back to Home</a>
-    </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto p-6">
+        <h1 class="text-3xl font-black mb-8 text-white">Watch History</h1>
+        <div id="history-grid" class="flex flex-col gap-4">
+            <p class="text-zinc-500 italic">No history found. Go watch some anime!</p>
+        </div>
+    </main>
 
     <script>
         const history = JSON.parse(localStorage.getItem('animeHistory') || '[]');
@@ -22,12 +30,13 @@
             container.innerHTML = '';
             history.reverse().forEach(item => {
                 container.innerHTML += `
-                    <div class="flex items-center gap-4 bg-zinc-900 p-4 rounded-xl border border-zinc-800">
-                        <img src="${item.img}" class="w-16 h-20 object-cover rounded">
-                        <div>
-                            <h3 class="font-bold">${item.title}</h3>
+                    <div class="flex items-center gap-4 bg-zinc-900 p-4 rounded-xl border border-zinc-800 hover:border-zinc-700 transition">
+                        <img src="${item.img}" class="w-16 h-20 object-cover rounded shadow-lg">
+                        <div class="flex-1">
+                            <h3 class="font-bold text-lg text-white">${item.title}</h3>
                             <p class="text-xs text-zinc-400">Last watched: Episode ${item.ep}</p>
-                            <a href="player.html?title=${encodeURIComponent(item.title)}&mal_id=${item.id}&img=${encodeURIComponent(item.img)}" class="text-indigo-400 text-xs font-bold mt-2 block">Resume Watching</a>
+                            <a href="player.html?title=${encodeURIComponent(item.title)}&mal_id=${item.id}&img=${encodeURIComponent(item.img)}" 
+                               class="text-indigo-400 text-xs font-bold mt-2 block hover:underline">Resume Watching →</a>
                         </div>
                     </div>
                 `;
