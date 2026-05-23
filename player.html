@@ -49,9 +49,7 @@
         
         <div class="w-full lg:w-3/4 space-y-4 shrink-0">
             <div class="rounded-2xl overflow-hidden bg-black border border-zinc-800 shadow-2xl relative w-full h-[45vh] md:h-[65vh]">
-                <video id="player" playsinline controls class="w-full h-full object-cover">
-                     <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
-                </video>
+                <video id="player" playsinline controls class="w-full h-full object-cover"></video>
             </div>
             
             <div class="bg-zinc-900/80 border border-zinc-900 rounded-xl p-5 space-y-3 backdrop-blur-md">
@@ -89,9 +87,18 @@
         const queueListContainer = document.getElementById('episode-scroll-list');
         const countBadge = document.getElementById('episode-count-badge');
 
+        // Initialize Plyr on the empty video tag
         const player = new Plyr('#player', { 
             controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen']
         });
+
+        // Set the default standby video purely through JS so Plyr tracks it properly
+        player.source = {
+            type: 'video',
+            sources: [
+                { src: 'https://media.w3.org/2010/05/sintel/trailer.mp4', type: 'video/mp4' }
+            ]
+        };
 
         // TMDb Background Request
         if(title && title !== 'Selected Anime') {
@@ -148,22 +155,20 @@
                             rowItem.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition bg-indigo-600/10 border-indigo-500/30 text-indigo-400";
                             countBadge.textContent = `${ep.mal_id < 10 ? '0' + ep.mal_id : ep.mal_id} / ${episodes.length}`;
                             
+                            // Safe W3C Fallback Servers
                             const videoUrl = (ep.mal_id % 2 === 0) 
-                                ? "https://vjs.zencdn.net/v/oceans.mp4" 
-                                : "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+                                ? "https://www.w3schools.com/html/mov_bbb.mp4" 
+                                : "https://media.w3.org/2010/05/sintel/trailer.mp4";
                             
-                            // THE FIX: Safely passing the source directly through Plyr's API
                             player.source = {
                                 type: 'video',
-                                sources: [
-                                    {
-                                        src: videoUrl,
-                                        type: 'video/mp4',
-                                    }
-                                ],
+                                sources: [{ src: videoUrl, type: 'video/mp4' }]
                             };
                             
-                            player.play().catch(e => console.log("Autoplay blocked"));
+                            // Let the player load the new source metadata for 100ms before forcing play
+                            setTimeout(() => {
+                                player.play().catch(e => console.log("Autoplay blocked by browser policy"));
+                            }, 100);
                         });
 
                         queueListContainer.appendChild(rowItem);
@@ -188,21 +193,17 @@
                 
                 rowItem.addEventListener('click', () => {
                     const videoUrl = (i % 2 === 0) 
-                        ? "https://vjs.zencdn.net/v/oceans.mp4" 
-                        : "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+                        ? "https://www.w3schools.com/html/mov_bbb.mp4" 
+                        : "https://media.w3.org/2010/05/sintel/trailer.mp4";
                     
-                    // THE FIX: Safely passing the source directly through Plyr's API
                     player.source = {
                         type: 'video',
-                        sources: [
-                            {
-                                src: videoUrl,
-                                type: 'video/mp4',
-                            }
-                        ],
+                        sources: [{ src: videoUrl, type: 'video/mp4' }]
                     };
 
-                    player.play().catch(e => console.log("Autoplay blocked"));
+                    setTimeout(() => {
+                        player.play().catch(e => console.log("Autoplay blocked by browser policy"));
+                    }, 100);
                 });
                 
                 queueListContainer.appendChild(rowItem);
