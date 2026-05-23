@@ -5,6 +5,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const heroBanner = document.getElementById("hero-banner");
     const heroPlayBtn = document.getElementById("hero-play-btn");
 
+    // PLUGGED IN YOUR TMDB API KEY HERE
+    const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
+
     fetch("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=10")
         .then(response => response.json())
         .then(data => {
@@ -16,6 +19,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 heroTitle.textContent = spotlight.title;
                 heroDesc.textContent = spotlight.synopsis || "No description overview listing indexed yet.";
                 
+                // Fetch high-res backdrop wallpaper using TMDb Search
+                fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(spotlight.title)}`)
+                    .then(res => res.json())
+                    .then(tmdbSearch => {
+                        if (tmdbSearch.results && tmdbSearch.results.length > 0 && tmdbSearch.results[0].backdrop_path) {
+                            const backdropUrl = `https://image.tmdb.org/t/p/original${tmdbSearch.results[0].backdrop_path}`;
+                            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.4), rgba(9,9,11,0.2)), url('${backdropUrl}')`;
+                        }
+                    })
+                    .catch(err => console.error("TMDb spotlight error:", err));
+
                 heroPlayBtn.addEventListener("click", () => {
                     window.location.href = `player.html?title=${encodeURIComponent(spotlight.title)}&mal_id=${spotlight.mal_id}&img=${encodeURIComponent(spotlight.images.jpg.large_image_url || spotlight.images.jpg.image_url)}`;
                 });
@@ -36,7 +50,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 `;
 
-                // CRITICAL FIX: Explicitly passing mal_id in the URL parameter line here
                 wrapper.addEventListener("click", () => {
                     window.location.href = `player.html?title=${encodeURIComponent(anime.title)}&mal_id=${anime.mal_id}&img=${encodeURIComponent(anime.images.jpg.large_image_url || anime.images.jpg.image_url)}`;
                 });
