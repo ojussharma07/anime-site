@@ -40,9 +40,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
 
                 wrapper.addEventListener("click", () => {
-                    window.location.href = `player.html?title=${encodeURIComponent(anime.title)}&mal_id=${anime.mal_id}&img=${encodeURIComponent(anime.images.jpg.large_image_url || anime.images.jpg.image_url)}`;
-                });
-
+    window.location.href = `player.html?title=${encodeURIComponent(anime.title)}&mal_id=${anime.mal_id}&img=${encodeURIComponent(anime.images.jpg.large_image_url || anime.images.jpg.image_url)}`;
+});
                 animeGrid.appendChild(wrapper);
             });
         })
