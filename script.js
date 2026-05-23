@@ -6,16 +6,57 @@ document.addEventListener("DOMContentLoaded", () => {
     const heroBanner = document.getElementById("hero-banner");
     const heroPlayBtn = document.getElementById("hero-play-btn");
     
-    // Search Element Hooks
     const searchInput = document.getElementById("search-input");
     const searchBtn = document.getElementById("search-btn");
+    const alphaIndex = document.getElementById("alpha-index");
+    const genreList = document.getElementById("genre-list");
 
     const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
 
-    // 1. Reusable Grid Renderer (Builds cards for BOTH Top 10 and Search Results)
+    // Build the A-Z Index Bar
+    const letters = ['All', '#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
+    letters.forEach(letter => {
+        const btn = document.createElement("button");
+        btn.textContent = letter;
+        // Styling matches the pink/red hover effect from your screenshot
+        btn.className = "px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 transition duration-200";
+        
+        btn.addEventListener("click", () => {
+            // Reset colors
+            Array.from(alphaIndex.children).forEach(c => c.className = "px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 transition duration-200");
+            btn.className = "px-3 py-1.5 rounded bg-rose-600 border border-rose-600 text-white transition duration-200"; // Active state
+            
+            if (letter === 'All') {
+                loadTopAnime();
+            } else {
+                fetchByLetter(letter === '#' ? '1' : letter); // Use '1' to trick Jikan into returning numbers for '#'
+            }
+        });
+        alphaIndex.appendChild(btn);
+    });
+
+    // Build the Genre Buttons (Common Jikan Genre IDs)
+    const genres = [
+        { id: 1, name: "Action" }, { id: 2, name: "Adventure" }, { id: 4, name: "Comedy" },
+        { id: 8, name: "Drama" }, { id: 10, name: "Fantasy" }, { id: 14, name: "Horror" },
+        { id: 22, name: "Romance" }, { id: 24, name: "Sci-Fi" }, { id: 36, name: "Slice of Life" }
+    ];
+    genres.forEach(genre => {
+        const btn = document.createElement("button");
+        btn.textContent = genre.name;
+        btn.className = "whitespace-nowrap px-4 py-2 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-indigo-600 hover:text-white transition duration-200 text-sm font-bold";
+        
+        btn.addEventListener("click", () => {
+            Array.from(genreList.children).forEach(c => c.className = "whitespace-nowrap px-4 py-2 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-indigo-600 hover:text-white transition duration-200 text-sm font-bold");
+            btn.className = "whitespace-nowrap px-4 py-2 rounded-full bg-indigo-600 border border-indigo-600 text-white transition duration-200 text-sm font-bold";
+            fetchByGenre(genre.id, genre.name);
+        });
+        genreList.appendChild(btn);
+    });
+
+    // Reusable Grid Renderer
     function renderGrid(animeList) {
         animeGrid.innerHTML = "";
-        
         if (!animeList || animeList.length === 0) {
             animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">No results found.</p>`;
             return;
@@ -46,14 +87,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 2. Fetch Default Top 10 (Runs on initial page load)
+    // Default Load (Top Anime)
     function loadTopAnime() {
-        fetch("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=12")
+        gridHeader.textContent = "Trending Now";
+        fetch("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=24")
             .then(res => res.json())
             .then(data => {
                 const animeList = data.data;
 
-                // Build Spotlight Hero
                 if (animeList.length > 0) {
                     const spotlight = animeList[0];
                     heroTitle.textContent = spotlight.title;
@@ -75,30 +116,36 @@ document.addEventListener("DOMContentLoaded", () => {
                         window.location.href = `player.html?title=${safeTitle}&mal_id=${safeId}&img=${safeImg}`;
                     };
                 }
-
-                gridHeader.textContent = "Trending Now";
                 renderGrid(animeList);
-            })
-            .catch(err => console.error(err));
+            });
     }
 
-    // 3. Search Engine Query
+    // Search Functions
     function executeSearch(query) {
         gridHeader.textContent = `Search Results: "${query}"`;
-        animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Searching the database...</p>`;
-        
-        // Asks Jikan for up to 24 exact matches to the user's search
+        animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Searching...</p>`;
         fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=24&sfw`)
             .then(res => res.json())
-            .then(data => {
-                renderGrid(data.data);
-                // Scroll the page down to the grid results automatically
-                gridHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            })
-            .catch(err => console.error("Search Error:", err));
+            .then(data => renderGrid(data.data));
     }
 
-    // 4. Attach Listeners
+    function fetchByLetter(letter) {
+        gridHeader.textContent = `Shows starting with "${letter}"`;
+        animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Loading...</p>`;
+        fetch(`https://api.jikan.moe/v4/anime?letter=${letter}&order_by=popularity&sort=asc&limit=24`)
+            .then(res => res.json())
+            .then(data => renderGrid(data.data));
+    }
+
+    function fetchByGenre(genreId, genreName) {
+        gridHeader.textContent = `${genreName} Anime`;
+        animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Loading...</p>`;
+        fetch(`https://api.jikan.moe/v4/anime?genres=${genreId}&order_by=popularity&sort=asc&limit=24`)
+            .then(res => res.json())
+            .then(data => renderGrid(data.data));
+    }
+
+    // Attach Listeners
     searchBtn.addEventListener("click", () => {
         const query = searchInput.value.trim();
         if (query) executeSearch(query);
@@ -111,6 +158,5 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Boot up the page
     loadTopAnime();
 });
