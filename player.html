@@ -77,97 +77,153 @@
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
         // 1. Gather page parameters passed from your home selection click
-const urlParams = new URLSearchParams(window.location.search);
-const title = urlParams.get('title') || 'Selected Anime';
-const imgUrl = urlParams.get('img') || '';
+        const urlParams = new URLSearchParams(window.location.search);
+        const title = urlParams.get('title') || 'Selected Anime';
+        const imgUrl = urlParams.get('img') || '';
+        // Pull the mal_id passed from the index.html grid layout cards
+        const malId = urlParams.get('mal_id'); 
 
-document.getElementById('header-anime-title').textContent = title;
-document.getElementById('main-anime-title').textContent = title;
-document.title = `Watch ${title} — Anime.TV`;
+        document.getElementById('header-anime-title').textContent = title;
+        document.getElementById('main-anime-title').textContent = title;
+        document.title = `Watch ${title} — Anime.TV`;
 
-const mainVideoNode = document.getElementById('player');
-const internalVideoSource = mainVideoNode.querySelector('source');
+        const mainVideoNode = document.getElementById('player');
+        const internalVideoSource = mainVideoNode.querySelector('source');
 
-const player = new Plyr('#player', {
-    controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'fullscreen']
-});
-
-// 2. EPISODE DATABASE DIRECTORY
-// Add unique episode names and descriptions for your specific shows here
-const animeEpisodeData = {
-    "Shingeki no Kyojin": [
-        { ep: 1, name: "To You, in 2000 Years", desc: "The citizens of Shiganshina district find their peace shattered by a Titan attack.", time: "24 mins" },
-        { ep: 2, name: "That Day: The Fall of Shiganshina, Part 2", desc: "After the wall is breached, refugees flee to safety within Wall Rose.", time: "24 mins" },
-        { ep: 3, name: "A Dim Light Amid Despair", desc: "Eren begins his grueling journey training with the Cadet Corps.", time: "24 mins" }
-    ],
-    "Death Note": [
-        { ep: 1, name: "Rebirth", desc: "Light Yagami discovers a mysterious notebook dropped by a Shinigami.", time: "23 mins" },
-        { ep: 2, name: "Confrontation", desc: "The legendary, mysterious detective L makes his first strategic move.", time: "23 mins" }
-    ]
-};
-
-// Update the main synopsis text block if we have a custom description for the show
-if (title === "Shingeki no Kyojin") {
-    document.getElementById('anime-synopsis').textContent = "Centuries ago, mankind was slaughtered to near extinction by monstrous humanoid creatures called Titans, forcing humans to hide behind massive concentric walls.";
-} else if (title === "Death Note") {
-    document.getElementById('anime-synopsis').textContent = "A high school student discovers a supernatural notebook that grants him the ability to kill anyone whose name and face he knows.";
-}
-
-// 3. Populate the Episode Queue dynamically using our new data database
-const queueListContainer = document.getElementById('episode-scroll-list');
-const countBadge = document.getElementById('episode-count-badge');
-
-queueListContainer.innerHTML = ''; // Clear loading templates
-
-// Check if we have specific episodes written down for this show; if not, fall back to 12 generic ones
-const currentShowEpisodes = animeEpisodeData[title] || Array.from({length: 12}, (_, i) => ({
-    ep: i + 1,
-    name: `Episode ${i + 1}`,
-    desc: "Subtitled version ready for media stream playback.",
-    time: "24 mins"
-}));
-
-countBadge.textContent = `01 / ${currentShowEpisodes.length}`;
-
-currentShowEpisodes.forEach((episode, index) => {
-    const rowItem = document.createElement('button');
-    rowItem.className = `w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition duration-200 group ${
-        index === 0 
-        ? 'bg-indigo-600/10 border-indigo-500/30 text-indigo-400' 
-        : 'bg-zinc-900/30 border-zinc-900 hover:bg-zinc-900/80 hover:border-zinc-800 text-zinc-300'
-    }`;
-
-    rowItem.innerHTML = `
-        <div class="w-20 aspect-video bg-zinc-800 rounded-lg overflow-hidden shrink-0 relative">
-            <img src="${imgUrl || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=150'}" class="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition">
-            <div class="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white bg-black/20">▶</div>
-        </div>
-        <div class="truncate flex-1">
-            <h4 class="font-bold text-xs group-hover:text-white truncate">E${episode.ep} — ${episode.name}</h4>
-            <p class="text-[10px] text-zinc-500 mt-0.5 truncate">${episode.time} • Subtitled</p>
-        </div>
-    `;
-
-    rowItem.addEventListener('click', () => {
-        Array.from(queueListContainer.children).forEach(child => {
-            child.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition duration-200 group bg-zinc-900/30 border-zinc-900 hover:bg-zinc-900/80 hover:border-zinc-800 text-zinc-300";
+        const player = new Plyr('#player', { 
+            controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'fullscreen']
         });
 
-        rowItem.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition duration-200 group bg-indigo-600/10 border-indigo-500/30 text-indigo-400";
-        countBadge.textContent = `${episode.ep < 10 ? '0' + episode.ep : episode.ep} / ${currentShowEpisodes.length}`;
-        
-        // Swap out test file paths dynamically
-        internalVideoSource.src = (episode.ep % 2 === 0) ? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" : "https://vjs.zencdn.net/v/oceans.mp4";
-        mainVideoNode.load();
-        player.play();
-    });
+        // Fallback testing streams
+        const fallbackStreams = [
+            "https://vjs.zencdn.net/v/oceans.mp4",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+        ];
 
-    queueListContainer.appendChild(rowItem);
-});
+        // Container references
+        const queueListContainer = document.getElementById('episode-scroll-list');
+        const countBadge = document.getElementById('episode-count-badge');
 
-document.getElementById('server-select').addEventListener('change', (e) => {
-    alert(`Switched streaming parsing target route to: ${e.target.value.toUpperCase()} Server Protocol.`);
-});
+        // 2. MULTI-DATASET LIVE LOOKUP DISCOVERY (AniList + TMDb + IMDb + TVDB)
+        if (malId) {
+            // Fetch live mappings and descriptors across all 4 platforms simultaneously using the AniZip API
+            fetch(`https://api.anizip.com/v4/anime/mal/${malId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error("Dataset mapping cluster unreachable");
+                    return response.json();
+                })
+                .then(dataset => {
+                    console.log("Unified Global Dataset:", dataset);
+
+                    // A. EXTRACT AND DISPLAY CROSS-PLATFORM ID DIRECTORIES
+                    const aniListId = dataset.mappings.anilist_id || 'N/A';
+                    const imdbId = dataset.mappings.imdb_id || 'N/A';
+                    const tvdbId = dataset.mappings.thetvdb_id || 'N/A';
+                    const tmdbId = dataset.mappings.themoviedb_id || 'N/A';
+
+                    // Update main text block layout with true summary info from database mappings
+                    const trueSynopsis = dataset.summary || "No description registry found inside English localization indexes.";
+                    
+                    document.getElementById('anime-synopsis').innerHTML = `
+                        <div class="mb-3 text-zinc-300 text-xs md:text-sm leading-relaxed">${trueSynopsis}</div>
+                        <div class="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-zinc-500 font-mono pt-2 border-t border-zinc-800/60">
+                            <span>AL-ID: ${aniListId}</span>
+                            <span>IMDb-ID: ${imdbId}</span>
+                            <span>TVDB-ID: ${tvdbId}</span>
+                            <span>TMDb-ID: ${tmdbId}</span>
+                        </div>
+                    `;
+
+                    // B. POPULATE DYNAMIC REAL EPISODE LIST (TVDB chronological numbering)
+                    queueListContainer.innerHTML = ''; // Wipe loading indicator text
+                    
+                    // Convert episodic object dictionary directly into an iteration array
+                    const trueEpisodesList = Object.values(dataset.episodes);
+
+                    if (trueEpisodesList.length === 0) {
+                        queueListContainer.innerHTML = `<p class="text-xs text-zinc-600 text-center py-8">No episode mappings parsed.</p>`;
+                        return;
+                    }
+
+                    // Update metadata indicators automatically
+                    countBadge.textContent = `01 / ${trueEpisodesList.length}`;
+
+                    trueEpisodesList.forEach((episode, index) => {
+                        const rowItem = document.createElement('button');
+                        rowItem.className = `w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition duration-200 group ${
+                            index === 0 
+                            ? 'bg-indigo-600/10 border-indigo-500/30 text-indigo-400' 
+                            : 'bg-zinc-900/30 border-zinc-900 hover:bg-zinc-900/80 hover:border-zinc-800 text-zinc-300'
+                        }`;
+
+                        // Pull real thumbnail captures provided by TMDb/TVDB pipelines
+                        const epThumbnail = episode.image || imgUrl || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=150';
+                        
+                        // Pull real English episodic title entries
+                        const trueEpisodeName = episode.title.en || `Episode ${episode.episode}`;
+
+                        rowItem.innerHTML = `
+                            <div class="w-20 aspect-video bg-zinc-800 rounded-lg overflow-hidden shrink-0 relative border border-zinc-800">
+                                <img src="${epThumbnail}" class="w-full h-full object-cover opacity-60 group-hover:opacity-90 transition duration-300" loading="lazy">
+                                <div class="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white bg-black/20">▶</div>
+                            </div>
+                            <div class="truncate flex-1">
+                                <h4 class="font-bold text-xs group-hover:text-white truncate">E${episode.episode} — ${trueEpisodeName}</h4>
+                                <p class="text-[10px] text-zinc-500 mt-0.5 truncate">${episode.runtime || '24'} mins • Subtitled</p>
+                            </div>
+                        `;
+
+                        // Interactive video alternate swapping loop actions
+                        rowItem.addEventListener('click', () => {
+                            Array.from(queueListContainer.children).forEach(child => {
+                                child.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition duration-200 group bg-zinc-900/30 border-zinc-900 hover:bg-zinc-900/80 hover:border-zinc-800 text-zinc-300";
+                            });
+
+                            rowItem.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition duration-200 group bg-indigo-600/10 border-indigo-500/30 text-indigo-400";
+                            countBadge.textContent = `${episode.episode < 10 ? '0' + episode.episode : episode.episode} / ${trueEpisodesList.length}`;
+                            
+                            // Alternates streaming tracks based on numeric math loops
+                            internalVideoSource.src = (episode.episode % 2 === 0) ? fallbackStreams[1] : fallbackStreams[0];
+                            mainVideoNode.load();
+                            player.play();
+                        });
+
+                        queueListContainer.appendChild(rowItem);
+                    });
+
+                })
+                .catch(err => {
+                    console.error("Data tracking fallback triggered: ", err);
+                    executeLocalStaticFallback();
+                });
+        } else {
+            // Execute structural default layout fallback if index pages did not provide mal_id parameters
+            executeLocalStaticFallback();
+        }
+
+        function executeLocalStaticFallback() {
+            queueListContainer.innerHTML = '';
+            countBadge.textContent = `01 / 12`;
+            for (let i = 1; i <= 12; i++) {
+                const rowItem = document.createElement('button');
+                rowItem.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition duration-200 group bg-zinc-900/30 border-zinc-900 hover:bg-zinc-900/80 hover:border-zinc-800 text-zinc-300";
+                rowItem.innerHTML = `
+                    <div class="w-20 aspect-video bg-zinc-800 rounded-lg overflow-hidden shrink-0 relative">
+                        <img src="${imgUrl || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=150'}" class="w-full h-full object-cover opacity-70">
+                        <div class="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white bg-black/20">▶</div>
+                    </div>
+                    <div class="truncate flex-1">
+                        <h4 class="font-bold text-xs text-white">Episode ${i}</h4>
+                        <p class="text-[10px] text-zinc-500 mt-0.5">24 mins • Subtitled</p>
+                    </div>
+                `;
+                queueListContainer.appendChild(rowItem);
+            }
+        }
+
+        document.getElementById('server-select').addEventListener('change', (e) => {
+            alert(`Switched streaming parsing target route to: ${e.target.value.toUpperCase()} Server Protocol.`);
+        });
     </script>
 </body>
 </html>
