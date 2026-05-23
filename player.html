@@ -144,15 +144,15 @@
                         const trueEpisodeName = episode.title.en || `Episode ${episode.episode}`;
 
                         rowItem.innerHTML = `
-                            <div class="w-20 aspect-video bg-zinc-800 rounded-lg overflow-hidden shrink-0 relative border border-zinc-800">
-                                <img src="${epThumbnail}" class="w-full h-full object-cover opacity-60 group-hover:opacity-90 transition duration-300" loading="lazy">
-                                <div class="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white bg-black/20">▶</div>
-                            </div>
-                            <div class="truncate flex-1">
-                                <h4 class="font-bold text-xs group-hover:text-white truncate">E${episode.episode} — ${trueEpisodeName}</h4>
-                                <p class="text-[10px] text-zinc-500 mt-0.5 truncate">${episode.runtime || '24'} mins • Subtitled</p>
-                            </div>
-                        `;
+                  <div class="w-20 aspect-video bg-zinc-800 rounded-lg overflow-hidden shrink-0 relative border border-zinc-800">
+                  <img src="${epThumbnail}" class="w-full h-full object-cover opacity-60 group-hover:opacity-90 transition duration-300" loading="lazy">
+                    <div class="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white bg-black/20">▶</div>
+                 </div>
+                        <div class="truncate flex-1">
+                           <h4 class="font-bold text-xs group-hover:text-white truncate">${episode.episode}. ${trueEpisodeName}</h4>
+                          <p class="text-[10px] text-zinc-500 mt-0.5 truncate">${episode.runtime || '24'} mins • Subtitled</p>
+                          </div>
+                          ;
 
                         rowItem.addEventListener('click', () => {
                             Array.from(queueListContainer.children).forEach(child => {
@@ -191,7 +191,7 @@
                         <div class="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white bg-black/20">▶</div>
                     </div>
                     <div class="truncate flex-1">
-                        <h4 class="font-bold text-xs text-white">Episode ${i}</h4>
+                        <h4 class="font-bold text-xs text-white">${i}. Episode ${i}</h4>
                         <p class="text-[10px] text-zinc-500 mt-0.5">24 mins • Subtitled</p>
                     </div>
                 `;
