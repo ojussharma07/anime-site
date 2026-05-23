@@ -227,7 +227,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const genreNameQuery = urlParams.get('genre_name');
 
     if (searchQuery) {
-        executeSearch(searchQuery);
+        executeAdvancedSearch(searchQuery);
         fetch("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=1").then(res => res.json()).then(data => {
             if(data.data && data.data[0] && heroTitle && heroDesc) {
                 heroTitle.textContent = data.data[0].title;
