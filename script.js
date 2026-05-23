@@ -93,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 3. API Fetchers with Crash Protection
+    // 3. API Fetchers
     function loadTopAnime() {
         gridHeader.textContent = "Trending Now";
         fetch("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=24")
@@ -137,6 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function executeSearch(query) {
         gridHeader.textContent = `Search Results: "${query}"`;
+        searchInput.value = query; // Auto-fill the search bar so the user remembers what they typed
         animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Searching...</p>`;
         fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=24&sfw`)
             .then(res => res.json())
@@ -162,7 +163,22 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(data => renderGrid(data?.data || []));
     }
 
-    // Attach Listeners
+    // A generic fetcher for landing page redirects (Movies, Airing, Upcoming)
+    function fetchSpecialView(title, url) {
+        gridHeader.textContent = title;
+        animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Loading...</p>`;
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                renderGrid(data?.data || []);
+                gridHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            })
+            .catch(err => {
+                animeGrid.innerHTML = `<p class="text-red-500 col-span-full text-center py-10">Rate limit exceeded. Please refresh.</p>`;
+            });
+    }
+
+    // 4. Attach General Listeners
     searchBtn.addEventListener("click", () => {
         const query = searchInput.value.trim();
         if (query) executeSearch(query);
@@ -175,5 +191,36 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    loadTopAnime();
+    // 5. INITIALIZATION LOGIC (Checks the URL parameters from index.html)
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchQuery = urlParams.get('q');
+    const viewQuery = urlParams.get('view');
+
+    if (searchQuery) {
+        // If the user searched from the landing page
+        executeSearch(searchQuery);
+        // We still need to load the hero banner, so just load top anime in the background but don't overwrite the grid header
+        fetch("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=1").then(res => res.json()).then(data => {
+            if(data.data[0]) {
+                heroTitle.textContent = data.data[0].title;
+                heroDesc.textContent = data.data[0].synopsis;
+            }
+        });
+    } else if (viewQuery === 'ongoing') {
+        fetchSpecialView("Ongoing Anime", "https://api.jikan.moe/v4/seasons/now?limit=24");
+    } else if (viewQuery === 'upcoming') {
+        fetchSpecialView("New Releases", "https://api.jikan.moe/v4/seasons/upcoming?limit=24");
+    } else if (viewQuery === 'movies') {
+        fetchSpecialView("Anime Movies", "https://api.jikan.moe/v4/anime?type=movie&order_by=popularity&sort=asc&limit=24");
+    } else if (viewQuery === 'recent') {
+        // Fallback to recent episodes/seasons
+        fetchSpecialView("Recently Updated", "https://api.jikan.moe/v4/seasons/now?limit=24");
+    } else if (viewQuery === 'shuffle') {
+        // Grab a random page of popular anime
+        const randomPage = Math.floor(Math.random() * 10) + 1;
+        fetchSpecialView("Random Selection", `https://api.jikan.moe/v4/top/anime?limit=24&page=${randomPage}`);
+    } else {
+        // Standard default load if they just clicked "Watch Now"
+        loadTopAnime();
+    }
 });
