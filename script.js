@@ -8,12 +8,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
 
     fetch("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=10")
-        .then(response => {
-            if (!response.ok) throw new Error("Network response was not ok");
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            if (!data || !data.data) return;
             animeGrid.innerHTML = "";
             const animeList = data.data;
 
@@ -61,6 +57,5 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .catch(err => {
             console.error("Grid assembly error: ", err);
-            animeGrid.innerHTML = `<p class="text-xs text-zinc-500">System syncing paused.</p>`;
         });
 });
