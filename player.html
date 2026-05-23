@@ -43,12 +43,47 @@
     <script>
         // Use JavaScript to pull data from URL parameters
         const urlParams = new URLSearchParams(window.location.search);
+        const malId = urlParams.get('mal_id'); // e.g., 5114 for Fullmetal Alchemist
         const title = urlParams.get('title') || 'Unknown Anime';
-        const imgUrl = urlParams.get('img') || '';
 
         // Inject variables into UI nodes
         document.getElementById('anime-title').textContent = title;
         document.title = `Watching: ${title}`;
+
+        const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
+
+
+        if (malId) {
+    // Phase A: Query the open-source mapping database using the MAL ID
+    fetch(`https://api.anizip.com/v4/anime/mal/${malId}`)
+        .then(response => response.json())
+        .then(mappings => {
+            console.log("Unified ID Dataset:", mappings);
+            
+            const tmdbId = mappings.mappings.themoviedb_id;
+            const aniListId = mappings.mappings.anilist_id;
+            const imdbId = mappings.mappings.imdb_id;
+
+            // Display external reference IDs in your player dashboard metrics
+            console.log(`Linked Identifiers -> AniList: ${aniListId}, IMDb: ${imdbId}, TMDb: ${tmdbId}`);
+
+            // Phase B: If a valid TMDb mapping exists, pull high-res backdrop imagery
+            if (tmdbId) {
+                fetch(`https://api.themoviedb.org/3/tv/${tmdbId}?api_key=${TMDB_API_KEY}`)
+                    .then(res => res.json())
+                    .then(tmdbData => {
+                        if (tmdbData.backdrop_path) {
+                            const fullBackdropUrl = `https://image.tmdb.org/t/p/original${tmdbData.backdrop_path}`;
+                            // Set the background of your player page to the official TMDb landscape artwork
+                            document.body.style.backgroundImage = `linear-gradient(to bottom, rgba(9, 9, 11, 0.85), #09090b), url('${fullBackdropUrl}')`;
+                            document.body.style.backgroundSize = 'cover';
+                            document.body.style.backgroundPosition = 'center';
+                        }
+                    });
+            }
+        })
+        .catch(err => console.error("Error cross-referencing metadata datasets:", err));
+}
         
         if(imgUrl) {
             const posterImg = document.getElementById('anime-poster');
