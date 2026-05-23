@@ -13,43 +13,52 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
 
-    // Build the A-Z Index Bar
+    // 1. Build the A-Z Index Dropdown Menu
     const letters = ['All', '#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
     letters.forEach(letter => {
         const btn = document.createElement("button");
         btn.textContent = letter;
-        // Styling matches the pink/red hover effect from your screenshot
-        btn.className = "px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 transition duration-200";
+        // Compact square styling for the dropdown
+        const defaultClass = "w-8 h-8 flex items-center justify-center rounded bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs hover:bg-rose-600 hover:text-white hover:border-rose-600 transition duration-200";
+        const activeClass = "w-8 h-8 flex items-center justify-center rounded bg-rose-600 border border-rose-600 text-white text-xs transition duration-200";
+        
+        btn.className = letter === 'All' ? activeClass : defaultClass;
         
         btn.addEventListener("click", () => {
-            // Reset colors
-            Array.from(alphaIndex.children).forEach(c => c.className = "px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 hover:bg-rose-600 hover:text-white hover:border-rose-600 transition duration-200");
-            btn.className = "px-3 py-1.5 rounded bg-rose-600 border border-rose-600 text-white transition duration-200"; // Active state
+            Array.from(alphaIndex.children).forEach(c => c.className = defaultClass);
+            btn.className = activeClass;
             
             if (letter === 'All') {
                 loadTopAnime();
             } else {
-                fetchByLetter(letter === '#' ? '1' : letter); // Use '1' to trick Jikan into returning numbers for '#'
+                fetchByLetter(letter === '#' ? '1' : letter);
             }
+            gridHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
         alphaIndex.appendChild(btn);
     });
 
-    // Build the Genre Buttons (Common Jikan Genre IDs)
+    // 2. Build the Genre Dropdown Menu
     const genres = [
         { id: 1, name: "Action" }, { id: 2, name: "Adventure" }, { id: 4, name: "Comedy" },
         { id: 8, name: "Drama" }, { id: 10, name: "Fantasy" }, { id: 14, name: "Horror" },
-        { id: 22, name: "Romance" }, { id: 24, name: "Sci-Fi" }, { id: 36, name: "Slice of Life" }
+        { id: 7, name: "Mystery" }, { id: 22, name: "Romance" }, { id: 24, name: "Sci-Fi" }, 
+        { id: 36, name: "Slice of Life" }, { id: 30, name: "Sports" }, { id: 37, name: "Supernatural" }
     ];
     genres.forEach(genre => {
         const btn = document.createElement("button");
         btn.textContent = genre.name;
-        btn.className = "whitespace-nowrap px-4 py-2 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-indigo-600 hover:text-white transition duration-200 text-sm font-bold";
+        // Compact pill styling for the dropdown
+        const defaultClass = "px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-indigo-600 hover:text-white text-[11px] font-bold transition duration-200";
+        const activeClass = "px-3 py-1.5 rounded bg-indigo-600 border border-indigo-600 text-white text-[11px] font-bold transition duration-200";
+        
+        btn.className = defaultClass;
         
         btn.addEventListener("click", () => {
-            Array.from(genreList.children).forEach(c => c.className = "whitespace-nowrap px-4 py-2 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-indigo-600 hover:text-white transition duration-200 text-sm font-bold");
-            btn.className = "whitespace-nowrap px-4 py-2 rounded-full bg-indigo-600 border border-indigo-600 text-white transition duration-200 text-sm font-bold";
+            Array.from(genreList.children).forEach(c => c.className = defaultClass);
+            btn.className = activeClass;
             fetchByGenre(genre.id, genre.name);
+            gridHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
         genreList.appendChild(btn);
     });
@@ -87,7 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Default Load (Top Anime)
+    // Default Load
     function loadTopAnime() {
         gridHeader.textContent = "Trending Now";
         fetch("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=24")
@@ -126,11 +135,14 @@ document.addEventListener("DOMContentLoaded", () => {
         animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Searching...</p>`;
         fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=24&sfw`)
             .then(res => res.json())
-            .then(data => renderGrid(data.data));
+            .then(data => {
+                renderGrid(data.data);
+                gridHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
     }
 
     function fetchByLetter(letter) {
-        gridHeader.textContent = `Shows starting with "${letter}"`;
+        gridHeader.textContent = `Shows starting with "${letter === '1' ? '#' : letter}"`;
         animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Loading...</p>`;
         fetch(`https://api.jikan.moe/v4/anime?letter=${letter}&order_by=popularity&sort=asc&limit=24`)
             .then(res => res.json())
