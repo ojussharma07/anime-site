@@ -18,18 +18,10 @@ document.addEventListener("DOMContentLoaded", () => {
         
         heroTitle.textContent = anime.title;
         
-        // FIX: Clean and shorten the description
         if (heroDesc) {
             let desc = anime.synopsis ? anime.synopsis : "No synopsis overview available.";
-            
-            // Remove the annoying MAL watermark
             desc = desc.replace(/\[Written by MAL Rewrite\]/gi, '').trim();
-            
-            // Strictly cap the length to 200 characters so it never floods the screen
-            if (desc.length > 200) {
-                desc = desc.substring(0, 200).trim() + "...";
-            }
-            
+            if (desc.length > 200) desc = desc.substring(0, 200).trim() + "...";
             heroDesc.textContent = desc;
         }
         
@@ -45,16 +37,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     const backdropUrl = `https://image.tmdb.org/t/p/original${tmdbSearch.results[0].backdrop_path}`;
                     heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.6), rgba(9,9,11,0.2)), url('${backdropUrl}')`;
                 }
-            }).catch(() => console.log("TMDb BG skipped, using Jikan fallback"));
+            }).catch(() => {});
 
         if (heroPlayBtn) {
-            heroPlayBtn.onclick = () => {
-                window.location.href = `info.html?id=${anime.mal_id}`;
-            };
+            heroPlayBtn.onclick = () => window.location.href = `info.html?id=${anime.mal_id}`;
         }
     }
 
-    // 1. Build A-Z Dropdown
+    // A-Z Dropdown
     if (alphaIndex) {
         const letters = ['All', '#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
         letters.forEach(letter => {
@@ -62,25 +52,20 @@ document.addEventListener("DOMContentLoaded", () => {
             btn.textContent = letter;
             const defaultClass = "w-8 h-8 flex items-center justify-center rounded bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs hover:bg-rose-600 hover:text-white hover:border-rose-600 transition duration-200";
             const activeClass = "w-8 h-8 flex items-center justify-center rounded bg-rose-600 border border-rose-600 text-white text-xs transition duration-200";
-            
             btn.className = letter === 'All' ? activeClass : defaultClass;
             
             btn.addEventListener("click", () => {
                 Array.from(alphaIndex.children).forEach(c => c.className = defaultClass);
                 btn.className = activeClass;
-                
-                if (letter === 'All') {
-                    loadTopAnime();
-                } else {
-                    fetchByLetter(letter === '#' ? '1' : letter);
-                }
+                if (letter === 'All') loadTopAnime();
+                else fetchByLetter(letter === '#' ? '1' : letter);
                 if (gridHeader) gridHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
             alphaIndex.appendChild(btn);
         });
     }
 
-    // 2. Render Grid
+    // MAIN GRID RENDERER
     function renderGrid(animeList) {
         if (!animeGrid) return;
         animeGrid.innerHTML = "";
@@ -92,8 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         animeList.forEach((anime) => {
             const wrapper = document.createElement("div");
-            wrapper.className = "relative group cursor-pointer aspect-[2/3] rounded-xl overflow-hidden border border-zinc-900 hover:border-zinc-700 transition duration-300";
-            
+            wrapper.className = "relative group cursor-pointer aspect-[2/3] rounded-xl overflow-hidden border border-zinc-900 hover:border-zinc-700 transition duration-300 shadow-lg";
             const coverImg = (anime.images && anime.images.jpg && anime.images.jpg.large_image_url) ? anime.images.jpg.large_image_url : '';
             
             wrapper.innerHTML = `
@@ -103,16 +87,48 @@ document.addEventListener("DOMContentLoaded", () => {
                     <p class="text-[10px] text-zinc-400 mt-0.5">★ ${anime.score || 'N/A'} • ${anime.type}</p>
                 </div>
             `;
-
-            wrapper.addEventListener("click", () => {
-                window.location.href = `info.html?id=${anime.mal_id}`;
-            });
-
+            wrapper.addEventListener("click", () => window.location.href = `info.html?id=${anime.mal_id}`);
             animeGrid.appendChild(wrapper);
         });
     }
 
-    // 3. API Fetchers
+    // --- NEW: MINI COLUMN RENDERER ---
+    // Takes data and builds the sleek horizontal cards for the 3 bottom columns
+    function buildMiniList(url, containerId) {
+        const container = document.getElementById(containerId);
+        if(!container) return;
+
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                const list = data.data.slice(0, 5); // Only take top 5
+                container.innerHTML = ""; // clear loading text
+                
+                list.forEach(anime => {
+                    const row = document.createElement("div");
+                    row.className = "flex items-center gap-4 bg-zinc-900/30 hover:bg-zinc-800/80 p-2.5 rounded-xl cursor-pointer transition border border-transparent hover:border-zinc-700 group";
+                    const coverImg = anime.images?.jpg?.image_url || '';
+                    
+                    row.innerHTML = `
+                        <div class="w-12 h-16 rounded-md overflow-hidden shrink-0 shadow-md">
+                            <img src="${coverImg}" class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
+                        </div>
+                        <div class="flex-1 overflow-hidden">
+                            <h4 class="text-sm font-bold text-zinc-200 group-hover:text-white truncate">${anime.title}</h4>
+                            <div class="flex items-center gap-2 mt-1.5 text-[10px] font-bold">
+                                <span class="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-1.5 py-0.5 rounded">${anime.type || 'TV'}</span>
+                                <span class="bg-zinc-800 text-zinc-400 border border-zinc-700 px-1.5 py-0.5 rounded">★ ${anime.score || 'N/A'}</span>
+                            </div>
+                        </div>
+                    `;
+                    row.addEventListener("click", () => window.location.href = `info.html?id=${anime.mal_id}`);
+                    container.appendChild(row);
+                });
+            })
+            .catch(() => container.innerHTML = `<p class="text-xs text-red-500 py-4">Failed to load.</p>`);
+    }
+
+    // MAIN FETCHERS
     function loadTopAnime() {
         if (gridHeader) gridHeader.textContent = "Trending Now";
         fetch("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=24")
@@ -124,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .catch(() => {
                 if (heroTitle) heroTitle.textContent = "Database Offline";
-                if (heroDesc) heroDesc.textContent = "Jikan API rate limit reached. Please wait a few seconds and refresh.";
+                if (heroDesc) heroDesc.textContent = "Rate limit reached. Please refresh.";
             });
     }
 
@@ -137,25 +153,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const statusEl = document.getElementById('filter-status');
         const sortEl = document.getElementById('filter-sort');
 
-        const type = typeEl ? typeEl.value : "";
-        const genre = genreEl ? genreEl.value : "";
-        const status = statusEl ? statusEl.value : "";
-        const sort = sortEl ? sortEl.value : "";
-
         let url = `https://api.jikan.moe/v4/anime?limit=24&sfw`;
-        
         if (query) url += `&q=${encodeURIComponent(query)}`;
-        if (type) url += `&type=${type}`;
-        if (genre) url += `&genres=${genre}`;
-        if (status) url += `&status=${status}`;
-        if (sort) url += `&order_by=${sort}&sort=desc`;
+        if (typeEl && typeEl.value) url += `&type=${typeEl.value}`;
+        if (genreEl && genreEl.value) url += `&genres=${genreEl.value}`;
+        if (statusEl && statusEl.value) url += `&status=${statusEl.value}`;
+        if (sortEl && sortEl.value) url += `&order_by=${sortEl.value}&sort=desc`;
 
-        if (gridHeader) {
-            if (query) gridHeader.textContent = `Search Results: "${query}"`;
-            else if (type || genre || status || sort) gridHeader.textContent = "Filtered Results";
-            else gridHeader.textContent = "All Anime";
-        }
-        
+        if (gridHeader) gridHeader.textContent = query ? `Search: "${query}"` : "Filtered Results";
         if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Searching...</p>`;
         
         fetch(url)
@@ -164,33 +169,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 const list = data?.data || [];
                 if (list.length > 0) updateHeroBanner(list[0]);
                 renderGrid(list);
-            })
-            .catch(() => {
-                if (animeGrid) animeGrid.innerHTML = `<p class="text-red-500 col-span-full text-center py-10">Rate limit exceeded.</p>`;
-            });
-    }
-
-    function fetchByLetter(letter) {
-        if (gridHeader) gridHeader.textContent = `Shows starting with "${letter === '1' ? '#' : letter}"`;
-        if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Loading...</p>`;
-        fetch(`https://api.jikan.moe/v4/anime?letter=${letter}&order_by=popularity&sort=asc&limit=24`)
-            .then(res => res.json())
-            .then(data => {
-                const list = data?.data || [];
-                if (list.length > 0) updateHeroBanner(list[0]);
-                renderGrid(list);
-            });
-    }
-
-    function fetchByGenre(genreId, genreName) {
-        if (gridHeader) gridHeader.textContent = `${genreName} Anime`;
-        if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Loading...</p>`;
-        fetch(`https://api.jikan.moe/v4/anime?genres=${genreId}&order_by=popularity&sort=asc&limit=24`)
-            .then(res => res.json())
-            .then(data => {
-                const list = data?.data || [];
-                if (list.length > 0) updateHeroBanner(list[0]);
-                renderGrid(list);
+                if (gridHeader) gridHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
     }
 
@@ -203,46 +182,46 @@ document.addEventListener("DOMContentLoaded", () => {
                 const list = data?.data || [];
                 if (list.length > 0) updateHeroBanner(list[0]);
                 renderGrid(list);
-            })
-            .catch(() => {
-                if (animeGrid) animeGrid.innerHTML = `<p class="text-red-500 col-span-full text-center py-10">Rate limit exceeded.</p>`;
             });
     }
 
-    // 4. Attach General Listeners
+    // Attach Input Listeners
     if (searchBtn && searchInput) {
         searchBtn.addEventListener("click", () => executeAdvancedSearch());
         searchInput.addEventListener("keypress", (e) => {
             if (e.key === "Enter") executeAdvancedSearch();
         });
     }
-
     const filterBtn = document.getElementById('apply-filters-btn');
     if (filterBtn) filterBtn.addEventListener("click", () => executeAdvancedSearch());
 
-    // 5. INITIALIZATION LOGIC
+    // --- INITIALIZATION ROUTER ---
     const urlParams = new URLSearchParams(window.location.search);
     const searchQuery = urlParams.get('q');
     const viewQuery = urlParams.get('view');
     const genreIdQuery = urlParams.get('genre_id');
     const genreNameQuery = urlParams.get('genre_name');
 
-    if (searchQuery) {
-        executeAdvancedSearch(searchQuery);
-    } else if (genreIdQuery && genreNameQuery) {
-        fetchByGenre(genreIdQuery, genreNameQuery.replace(/_/g, ' '));
-    } else if (viewQuery === 'new') {
-        fetchSpecialView("Newly Released", "https://api.jikan.moe/v4/seasons/now?limit=24");
-    } else if (viewQuery === 'ongoing') {
-        fetchSpecialView("Top Ongoing Anime", "https://api.jikan.moe/v4/anime?status=airing&order_by=score&sort=desc&limit=24");
-    } else if (viewQuery === 'upcoming') {
-        fetchSpecialView("Upcoming Releases", "https://api.jikan.moe/v4/seasons/upcoming?limit=24");
-    } else if (viewQuery === 'movies') {
-        fetchSpecialView("Anime Movies", "https://api.jikan.moe/v4/anime?type=movie&order_by=popularity&sort=desc&limit=24");
-    } else if (viewQuery === 'shuffle') {
-        const randomPage = Math.floor(Math.random() * 10) + 1;
-        fetchSpecialView("Random Selection", `https://api.jikan.moe/v4/top/anime?limit=24&page=${randomPage}`);
-    } else {
-        loadTopAnime();
-    }
+    // 1. Load Main Grid
+    if (searchQuery) executeAdvancedSearch(searchQuery);
+    else if (genreIdQuery && genreNameQuery) fetchSpecialView(`${genreNameQuery.replace(/_/g, ' ')} Anime`, `https://api.jikan.moe/v4/anime?genres=${genreIdQuery}&order_by=popularity&sort=asc&limit=24`);
+    else if (viewQuery === 'new') fetchSpecialView("Newly Released", "https://api.jikan.moe/v4/seasons/now?limit=24");
+    else if (viewQuery === 'upcoming') fetchSpecialView("Upcoming Releases", "https://api.jikan.moe/v4/seasons/upcoming?limit=24");
+    else if (viewQuery === 'movies') fetchSpecialView("Anime Movies", "https://api.jikan.moe/v4/anime?type=movie&order_by=popularity&sort=desc&limit=24");
+    else if (viewQuery === 'ongoing') fetchSpecialView("Top Ongoing Anime", "https://api.jikan.moe/v4/anime?status=airing&order_by=score&sort=desc&limit=24");
+    else loadTopAnime();
+
+    // 2. Load the 3 Bottom Columns (Staggered to prevent API bans)
+    setTimeout(() => {
+        buildMiniList("https://api.jikan.moe/v4/seasons/now?limit=5", "col-airing");
+    }, 1000);
+    
+    setTimeout(() => {
+        buildMiniList("https://api.jikan.moe/v4/seasons/upcoming?limit=5", "col-upcoming");
+    }, 2000);
+    
+    setTimeout(() => {
+        buildMiniList("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=5", "col-popular");
+    }, 3000);
+
 });
