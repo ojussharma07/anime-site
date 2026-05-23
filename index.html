@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnimeStream - Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 font-sans min-h-screen flex">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-zinc-900 p-6 hidden md:block border-r border-zinc-800">
+        <h1 class="text-2xl font-black tracking-wider text-indigo-500 mb-8">ANIME.TV</h1>
+        <nav class="space-y-4">
+            <a href="#" class="block font-semibold text-indigo-400">Home</a>
+            <a href="#" class="block text-zinc-400 hover:text-white transition">Trending</a>
+            <a href="#" class="block text-zinc-400 hover:text-white transition">My Watchlist</a>
+        </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-6 md:p-10">
+        <!-- Header / Search -->
+        <header class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-bold">Trending Right Now</h2>
+            <input type="text" id="search-bar" placeholder="Search anime..." class="bg-zinc-900 border border-zinc-800 text-sm rounded-lg focus:outline-none focus:border-indigo-500 px-4 py-2 w-64 text-white">
+        </header>
+
+        <!-- Anime Grid (Populated by JavaScript) -->
+        <div id="anime-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            <!-- Loading state placeholder -->
+            <p class="text-zinc-500 col-span-full">Loading content...</p>
+        </div>
+    </main>
+
+    <!-- Link your custom logic script -->
+    <script src="script.js"></script>
+</body>
+</html>

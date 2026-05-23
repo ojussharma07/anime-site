@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watching Anime</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Plyr HTML5 Player CSS -->
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+</head>
+<body class="bg-zinc-950 text-zinc-100 font-sans min-h-screen p-4 md:p-10">
+
+    <div class="max-w-5xl mx-auto">
+        <!-- Back Navigation Button -->
+        <a href="index.html" class="inline-flex items-center gap-2 text-zinc-400 hover:text-white mb-6 transition text-sm">
+            ← Back to Dashboard
+        </a>
+
+        <!-- Main Video Framework Container -->
+        <div class="rounded-2xl overflow-hidden bg-black shadow-2xl border border-zinc-800 mb-6">
+            <video id="player" playsinline controls data-poster="">
+                <!-- Placeholder legal/sample testing stream stream file -->
+                <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
+            </video>
+        </div>
+
+        <!-- Anime Metadata Display Details -->
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex flex-col md:flex-row gap-6">
+            <img id="anime-poster" src="" alt="Poster" class="w-32 h-44 object-cover rounded-xl shadow-lg border border-zinc-700 hidden md:block">
+            <div>
+                <h1 id="anime-title" class="text-2xl md:text-3xl font-extrabold text-white mb-2">Loading Title...</h1>
+                <p class="text-zinc-400 text-sm mb-4">Streaming Server Source Status: <span class="text-emerald-400 font-semibold">Online (Demo Stream)</span></p>
+                <div class="flex flex-wrap gap-2" id="episode-list">
+                    <!-- Dynamic sample episodes container -->
+                    <span class="text-xs text-zinc-500">Episodes indexing available...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Plyr Library Engine Script Wrapper -->
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+    <script>
+        // Use JavaScript to pull data from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const title = urlParams.get('title') || 'Unknown Anime';
+        const imgUrl = urlParams.get('img') || '';
+
+        // Inject variables into UI nodes
+        document.getElementById('anime-title').textContent = title;
+        document.title = `Watching: ${title}`;
+        
+        if(imgUrl) {
+            const posterImg = document.getElementById('anime-poster');
+            posterImg.src = imgUrl;
+            posterImg.classList.remove('hidden');
+        }
+
+        // Initialize custom responsive skin player UI controls 
+        const player = new Plyr('#player', {
+            controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'captions', 'settings', 'pip', 'fullscreen']
+        });
+
+        // Generate quick mock interactive UI dummy episode list (e.g. 12 typical episodes)
+        const epContainer = document.getElementById('episode-list');
+        epContainer.innerHTML = ''; // Wipe status text
+        for (let i = 1; i <= 12; i++) {
+            const btn = document.createElement('button');
+            btn.className = "bg-zinc-800 hover:bg-indigo-600 border border-zinc-700 text-white font-medium text-xs px-4 py-2 rounded-lg transition active:scale-95";
+            btn.textContent = `Ep ${i}`;
+            // If clicked, alert user (In phase 2, this flips actual streaming URLs)
+            btn.addEventListener('click', () => alert(`Loading streaming endpoint for Episode ${i}`));
+            epContainer.appendChild(btn);
+        }
+    </script>
+</body>
+</html>
