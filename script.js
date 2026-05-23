@@ -31,8 +31,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     .catch(err => console.error("TMDb spotlight error:", err));
 
                 heroPlayBtn.addEventListener("click", () => {
-                    window.location.href = `player.html?title=${encodeURIComponent(spotlight.title)}&mal_id=${spotlight.mal_id}&img=${encodeURIComponent(spotlight.images.jpg.large_image_url || spotlight.images.jpg.image_url)}`;
-                });
+    window.location.href = `player.html?title=${encodeURIComponent(spotlight.title)}&mal_id=${spotlight.mal_id}&img=${encodeURIComponent(spotlight.images.jpg.large_image_url || spotlight.images.jpg.image_url)}`;
+});
             }
 
             animeList.forEach((anime, index) => {
@@ -50,10 +50,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 `;
 
-                wrapper.addEventListener("click", () => {
-                    window.location.href = `player.html?title=${encodeURIComponent(anime.title)}&mal_id=${anime.mal_id}&img=${encodeURIComponent(anime.images.jpg.large_image_url || anime.images.jpg.image_url)}`;
-                });
-
+               // Ensure this exact structure is written near the bottom of script.js:
+wrapper.addEventListener("click", () => {
+    window.location.href = `player.html?title=${encodeURIComponent(anime.title)}&mal_id=${anime.mal_id}&img=${encodeURIComponent(anime.images.jpg.large_image_url || anime.images.jpg.image_url)}`;
+});
                 animeGrid.appendChild(wrapper);
             });
         })
