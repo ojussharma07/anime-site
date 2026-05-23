@@ -7,19 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <style>
-        /* Modern minimalist customization matching premium dark mode layouts */
         .plyr--full-ui input[type=range] { color: #6366f1; }
         .plyr__control--overlaid { background: #6366f1; }
         .plyr__accent { background: #6366f1; }
-        
-        /* Custom scrollbar interface for the episode sidebar queue layout */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #09090b; }
         ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
     </style>
 </head>
-<body class="bg-[#09090b] text-zinc-100 font-sans min-h-screen selection:bg-indigo-500 selection:text-white overflow-x-hidden transition-all duration-700">
+<body class="bg-[#09090b] text-zinc-100 font-sans min-h-screen selection:bg-indigo-500 selection:text-white overflow-x-hidden">
 
     <header class="w-full bg-[#09090b]/80 backdrop-blur-md border-b border-zinc-900 sticky top-0 z-50 px-4 py-3">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
@@ -31,223 +28,126 @@
                 <span id="header-anime-title" class="text-xs md:text-sm font-bold tracking-tight text-zinc-300 truncate max-w-[200px] md:max-w-md">Loading Title...</span>
             </div>
             <div class="flex items-center gap-2">
-                <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider hidden sm:inline">Server Source:</span>
-                <select id="server-select" class="bg-zinc-900 border border-zinc-800 text-xs font-semibold rounded-lg px-2.5 py-1.5 text-zinc-200 focus:outline-none focus:border-indigo-500 cursor-pointer">
+                <select id="server-select" class="bg-zinc-900 border border-zinc-800 text-xs font-semibold rounded-lg px-2.5 py-1.5 text-zinc-200 focus:outline-none">
                     <option value="gogoplay">GogoPlay (Default)</option>
-                    <option value="vidstreaming">Vidstreaming (Auto)</option>
-                    <option value="streamsb">StreamSB (Backup)</option>
                 </select>
             </div>
         </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 py-6 flex flex-col lg:flex-row gap-6 items-start">
-        
         <div class="w-full lg:w-3/4 space-y-4 shrink-0">
             <div class="rounded-2xl overflow-hidden bg-black border border-zinc-800 shadow-2xl relative w-full">
                 <video id="player" playsinline controls class="w-full h-full object-contain">
                     <source src="https://vjs.zencdn.net/v/oceans.mp4" type="video/mp4" />
                 </video>
             </div>
-            
-            <div class="bg-zinc-900/30 border border-zinc-900 rounded-xl p-5 space-y-3 backdrop-blur-md">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    <h1 id="main-anime-title" class="text-xl md:text-2xl font-black tracking-tight">Loading Title Metadata...</h1>
-                    <div class="flex items-center gap-2 text-xs">
-                        <span class="bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold px-2.5 py-0.5 rounded-md">AniList Linked</span>
-                        <span id="stream-status-badge" class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold px-2.5 py-0.5 rounded-md">Consumet API Online</span>
-                    </div>
-                </div>
+            <div class="bg-zinc-900/30 border border-zinc-900 rounded-xl p-5 space-y-3">
+                <h1 id="main-anime-title" class="text-xl md:text-2xl font-black tracking-tight">Loading Title...</h1>
                 <div id="anime-synopsis" class="text-xs md:text-sm text-zinc-400 leading-relaxed">
-                    Parsing structural layout records...
+                    Select an episode row from the queue grid panel to initialize media playback.
                 </div>
             </div>
         </div>
 
-        <div class="w-full lg:w-1/4 flex flex-col h-[50vh] lg:h-[73vh] bg-zinc-900/20 border border-zinc-900/60 rounded-2xl overflow-hidden sticky top-24 backdrop-blur-md">
+        <div class="w-full lg:w-1/4 flex flex-col h-[50vh] lg:h-[73vh] bg-zinc-900/20 border border-zinc-900/60 rounded-2xl overflow-hidden sticky top-24">
             <div class="p-4 border-b border-zinc-900 flex justify-between items-center bg-zinc-900/40">
-                <h2 class="text-sm font-black tracking-wide uppercase text-zinc-400">Episode Queue</h2>
+                <h2 class="text-sm font-black tracking-wide uppercase text-zinc-400">Episodes</h2>
                 <span id="episode-count-badge" class="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded font-mono font-bold">01 / --</span>
             </div>
             <div id="episode-scroll-list" class="flex-1 overflow-y-auto p-3 space-y-2 max-h-full">
-                <p class="text-xs text-zinc-600 text-center py-8">Parsing streaming directories...</p>
+                <p class="text-xs text-zinc-600 text-center py-8">Loading episodes...</p>
             </div>
         </div>
-        
     </main>
 
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
-        // 1. Core routing page query parameter hooks
         const urlParams = new URLSearchParams(window.location.search);
         const title = urlParams.get('title') || 'Selected Anime';
         const imgUrl = urlParams.get('img') || '';
         const malId = urlParams.get('mal_id'); 
 
-        // Integrated Developer Account Verification Key
-        const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
-
         document.getElementById('header-anime-title').textContent = title;
         document.getElementById('main-anime-title').textContent = title;
-        document.title = `Watch ${title} — Anime.TV`;
+        document.title = `Watch ${title}`;
 
         const mainVideoNode = document.getElementById('player');
         const internalVideoSource = mainVideoNode.querySelector('source');
-
-        const player = new Plyr('#player', { 
-            controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'fullscreen']
-        });
-
-        const fallbackStreams = [
-            "https://vjs.zencdn.net/v/oceans.mp4",
-            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-        ];
-
         const queueListContainer = document.getElementById('episode-scroll-list');
         const countBadge = document.getElementById('episode-count-badge');
 
-        // 2. Multi-Dataset API Mapping Execution Block
+        const player = new Plyr('#player', { 
+            controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen']
+        });
+
         if (malId) {
-            fetch(`https://api.anizip.com/v4/anime/mal/${malId}`)
+            // Ask Jikan directly for this specific show's episode data block list
+            fetch(`https://api.jikan.moe/v4/anime/${malId}/episodes`)
+                .then(res => res.json())
                 .then(response => {
-                    if (!response.ok) throw new Error("Dataset mapping cluster unreachable");
-                    return response.json();
-                })
-                .then(dataset => {
-                    console.log("Unified Global Dataset Matrix:", dataset);
+                    const episodes = response.data || [];
+                    queueListContainer.innerHTML = '';
 
-                    const aniListId = dataset.mappings.anilist_id || 'N/A';
-                    const imdbId = dataset.mappings.imdb_id || 'N/A';
-                    const tvdbId = dataset.mappings.thetvdb_id || 'N/A';
-                    const tmdbId = dataset.mappings.themoviedb_id || 'N/A';
-
-                    // CINESCAPE ENGINE HOOK: Query TMDb for specific wallpaper backdrop art matching ID
-                    if (tmdbId !== 'N/A') {
-                        fetch(`https://api.themoviedb.org/3/tv/${tmdbId}?api_key=${TMDB_API_KEY}`)
-                            .then(res => res.json())
-                            .then(tmdbData => {
-                                if (tmdbData.backdrop_path) {
-                                    const fullBackdropUrl = `https://image.tmdb.org/t/p/original${tmdbData.backdrop_path}`;
-                                    document.body.style.backgroundImage = `linear-gradient(to bottom, rgba(9, 9, 11, 0.88), #09090b), url('${fullBackdropUrl}')`;
-                                    document.body.style.backgroundSize = 'cover';
-                                    document.body.style.backgroundPosition = 'center top';
-                                    document.body.style.backgroundAttachment = 'fixed';
-                                }
-                            })
-                            .catch(e => console.error("TMDb context retrieval break:", e));
-                    }
-
-                    const trueSynopsis = dataset.summary || "No description registry found inside localization indexes.";
-                    
-                    document.getElementById('anime-synopsis').innerHTML = `
-                        <div class="mb-3 text-zinc-300 text-xs md:text-sm leading-relaxed">${trueSynopsis}</div>
-                        <div class="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-zinc-500 font-mono pt-2 border-t border-zinc-800/60">
-                            <span>AL-ID: ${aniListId}</span>
-                            <span>IMDb-ID: ${imdbId}</span>
-                            <span>TVDB-ID: ${tvdbId}</span>
-                            <span>TMDb-ID: ${tmdbId}</span>
-                        </div>
-                    `;
-
-                    queueListContainer.innerHTML = ''; 
-                    const trueEpisodesList = Object.values(dataset.episodes);
-
-                    if (trueEpisodesList.length === 0) {
-                        executeLocalStaticFallback();
+                    if (episodes.length === 0) {
+                        generateFallbackList();
                         return;
                     }
 
-                    countBadge.textContent = `01 / ${trueEpisodesList.length}`;
+                    countBadge.textContent = `01 / ${episodes.length}`;
 
-                    trueEpisodesList.forEach((episode, index) => {
+                    episodes.forEach((ep, index) => {
                         const rowItem = document.createElement('button');
                         rowItem.className = `w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition duration-200 group ${
-                            index === 0 
-                            ? 'bg-indigo-600/10 border-indigo-500/30 text-indigo-400' 
-                            : 'bg-zinc-900/30 border-zinc-900 hover:bg-zinc-900/80 hover:border-zinc-800 text-zinc-300'
+                            index === 0 ? 'bg-indigo-600/10 border-indigo-500/30 text-indigo-400' : 'bg-zinc-900/30 border-zinc-900 hover:bg-zinc-900/80 hover:border-zinc-800 text-zinc-300'
                         }`;
 
-                        const epThumbnail = episode.image || imgUrl || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=150';
-                        const trueEpisodeName = episode.title.en || `Episode ${episode.episode}`;
+                        // Use the clean naming convention format
+                        const displayTitle = ep.title || `Episode ${ep.mal_id}`;
 
                         rowItem.innerHTML = `
-                            <div class="w-20 aspect-video bg-zinc-800 rounded-lg overflow-hidden shrink-0 relative border border-zinc-800">
-                                <img src="${epThumbnail}" class="w-full h-full object-cover opacity-60 group-hover:opacity-90 transition duration-300" loading="lazy">
-                                <div class="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white bg-black/20">▶</div>
+                            <div class="w-16 aspect-video bg-zinc-800 rounded-lg overflow-hidden shrink-0 relative border border-zinc-800">
+                                <img src="${imgUrl}" class="w-full h-full object-cover opacity-60 group-hover:opacity-90">
+                                <div class="absolute inset-0 flex items-center justify-center text-[10px] text-white">▶</div>
                             </div>
                             <div class="truncate flex-1">
-                                <h4 class="font-bold text-xs group-hover:text-white truncate">${episode.episode}. ${trueEpisodeName}</h4>
-                                <p class="text-[10px] text-zinc-500 mt-0.5 truncate">${episode.runtime || '24'} mins • Subtitled</p>
+                                <h4 class="font-bold text-xs group-hover:text-white truncate">${ep.mal_id}. ${displayTitle}</h4>
+                                <p class="text-[10px] text-zinc-500 mt-0.5">Subtitled</p>
                             </div>
                         `;
 
                         rowItem.addEventListener('click', () => {
-                            Array.from(queueListContainer.children).forEach(child => {
-                                child.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition duration-200 group bg-zinc-900/30 border-zinc-900 hover:bg-zinc-900/80 hover:border-zinc-800 text-zinc-300";
-                            });
-
-                            rowItem.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition duration-200 group bg-indigo-600/10 border-indigo-500/30 text-indigo-400";
-                            countBadge.textContent = `${episode.episode < 10 ? '0' + episode.episode : episode.episode} / ${trueEpisodesList.length}`;
+                            Array.from(queueListContainer.children).forEach(c => c.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition bg-zinc-900/30 border-zinc-900 text-zinc-300");
+                            rowItem.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition bg-indigo-600/10 border-indigo-500/30 text-indigo-400";
+                            countBadge.textContent = `${ep.mal_id < 10 ? '0' + ep.mal_id : ep.mal_id} / ${episodes.length}`;
                             
-                            internalVideoSource.src = (episode.episode % 2 === 0) ? fallbackStreams[1] : fallbackStreams[0];
+                            internalVideoSource.src = (ep.mal_id % 2 === 0) ? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" : "https://vjs.zencdn.net/v/oceans.mp4";
                             mainVideoNode.load();
                             player.play();
                         });
 
                         queueListContainer.appendChild(rowItem);
                     });
-
                 })
-                .catch(err => {
-                    console.error("API Tunnel Blocked, fallback launched: ", err);
-                    executeLocalStaticFallback();
-                });
+                .catch(() => generateFallbackList());
         } else {
-            executeLocalStaticFallback();
+            generateFallbackList();
         }
 
-        // 3. Robust Error-Containment Local Fallback Architecture
-        function executeLocalStaticFallback() {
-            document.getElementById('anime-synopsis').textContent = "Streaming server sources initialized. Select an indexed episode module sequence from below to play.";
+        function generateFallbackList() {
             queueListContainer.innerHTML = '';
             countBadge.textContent = `01 / 12`;
             for (let i = 1; i <= 12; i++) {
                 const rowItem = document.createElement('button');
-                rowItem.className = `w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition duration-200 group ${
-                    i === 1 
-                    ? 'bg-indigo-600/10 border-indigo-500/30 text-indigo-400' 
-                    : 'bg-zinc-900/30 border-zinc-900 hover:bg-zinc-900/80 hover:border-zinc-800 text-zinc-300'
-                }`;
+                rowItem.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left bg-zinc-900/30 border-zinc-900 text-zinc-300";
                 rowItem.innerHTML = `
-                    <div class="w-20 aspect-video bg-zinc-800 rounded-lg overflow-hidden shrink-0 relative border border-zinc-800">
-                        <img src="${imgUrl || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=150'}" class="w-full h-full object-cover opacity-60 group-hover:opacity-90 transition" loading="lazy">
-                        <div class="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white bg-black/20">▶</div>
-                    </div>
                     <div class="truncate flex-1">
-                        <h4 class="font-bold text-xs group-hover:text-white truncate">${i}. Episode ${i}</h4>
-                        <p class="text-[10px] text-zinc-500 mt-0.5">24 mins • Subtitled</p>
+                        <h4 class="font-bold text-xs">${i}. Episode ${i}</h4>
                     </div>
                 `;
-                
-                rowItem.addEventListener('click', () => {
-                    Array.from(queueListContainer.children).forEach(child => {
-                        child.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition duration-200 group bg-zinc-900/30 border-zinc-900 hover:bg-zinc-900/80 hover:border-zinc-800 text-zinc-300";
-                    });
-                    rowItem.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition duration-200 group bg-indigo-600/10 border-indigo-500/30 text-indigo-400";
-                    countBadge.textContent = `${i < 10 ? '0' + i : i} / 12`;
-                    
-                    internalVideoSource.src = (i % 2 === 0) ? fallbackStreams[1] : fallbackStreams[0];
-                    mainVideoNode.load();
-                    player.play();
-                });
-                
                 queueListContainer.appendChild(rowItem);
             }
         }
-
-        document.getElementById('server-select').addEventListener('change', (e) => {
-            alert(`Switched streaming parsing target route to: ${e.target.value.toUpperCase()} Server Protocol.`);
-        });
     </script>
 </body>
 </html>
