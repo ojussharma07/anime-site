@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <style>
-        /* Modern minimalist customization matching premium dark mode layouts */
         .plyr--full-ui input[type=range] { color: #6366f1; }
         .plyr__control--overlaid { background: #6366f1; }
         .plyr__accent { background: #6366f1; }
@@ -23,12 +22,11 @@
         <div class="max-w-7xl mx-auto flex items-center justify-between">
             <div class="flex items-center gap-4">
                 <a href="index.html" class="text-zinc-400 hover:text-white text-sm font-medium transition flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-lg">
-                    ← Home
+                    &larr; Home
                 </a>
                 <span class="text-zinc-700">|</span>
                 <span id="header-anime-title" class="text-xs md:text-sm font-bold tracking-tight text-zinc-300 truncate max-w-[200px] md:max-w-md">Loading Title...</span>
             </div>
-            
             <div class="flex items-center gap-2">
                 <span class="text-[10px] text-zinc-500 font-bold uppercase tracking-wider hidden sm:inline">Server Source:</span>
                 <select id="server-select" class="bg-zinc-900 border border-zinc-800 text-xs font-semibold rounded-lg px-2.5 py-1.5 text-zinc-200 focus:outline-none focus:border-indigo-500 cursor-pointer">
@@ -41,14 +39,12 @@
     </header>
 
     <main class="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
-        
         <div class="lg:col-span-3 space-y-4">
             <div class="rounded-2xl overflow-hidden bg-black border border-zinc-800 shadow-2xl aspect-video w-full relative">
                 <video id="player" playsinline controls>
                     <source src="https://vjs.zencdn.net/v/oceans.mp4" type="video/mp4" />
                 </video>
             </div>
-
             <div class="bg-zinc-900/30 border border-zinc-900 rounded-xl p-5 space-y-3">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <h1 id="main-anime-title" class="text-xl md:text-2xl font-black tracking-tight">Loading Title Metadata...</h1>
@@ -66,21 +62,17 @@
                 <h2 class="text-sm font-black tracking-wide uppercase text-zinc-400">Episode Queue</h2>
                 <span id="episode-count-badge" class="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded font-mono font-bold">01 / 12</span>
             </div>
-
             <div id="episode-scroll-list" class="flex-1 overflow-y-auto p-3 space-y-2">
                 <p class="text-xs text-zinc-600 text-center py-8">Parsing streaming directories...</p>
             </div>
         </div>
-
     </main>
 
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <script>
-        // 1. Gather page parameters passed from your home selection click
         const urlParams = new URLSearchParams(window.location.search);
         const title = urlParams.get('title') || 'Selected Anime';
         const imgUrl = urlParams.get('img') || '';
-        // Pull the mal_id passed from the index.html grid layout cards
         const malId = urlParams.get('mal_id'); 
 
         document.getElementById('header-anime-title').textContent = title;
@@ -94,19 +86,15 @@
             controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'fullscreen']
         });
 
-        // Fallback testing streams
         const fallbackStreams = [
             "https://vjs.zencdn.net/v/oceans.mp4",
             "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
         ];
 
-        // Container references
         const queueListContainer = document.getElementById('episode-scroll-list');
         const countBadge = document.getElementById('episode-count-badge');
 
-        // 2. MULTI-DATASET LIVE LOOKUP DISCOVERY (AniList + TMDb + IMDb + TVDB)
         if (malId) {
-            // Fetch live mappings and descriptors across all 4 platforms simultaneously using the AniZip API
             fetch(`https://api.anizip.com/v4/anime/mal/${malId}`)
                 .then(response => {
                     if (!response.ok) throw new Error("Dataset mapping cluster unreachable");
@@ -115,13 +103,11 @@
                 .then(dataset => {
                     console.log("Unified Global Dataset:", dataset);
 
-                    // A. EXTRACT AND DISPLAY CROSS-PLATFORM ID DIRECTORIES
                     const aniListId = dataset.mappings.anilist_id || 'N/A';
                     const imdbId = dataset.mappings.imdb_id || 'N/A';
                     const tvdbId = dataset.mappings.thetvdb_id || 'N/A';
                     const tmdbId = dataset.mappings.themoviedb_id || 'N/A';
 
-                    // Update main text block layout with true summary info from database mappings
                     const trueSynopsis = dataset.summary || "No description registry found inside English localization indexes.";
                     
                     document.getElementById('anime-synopsis').innerHTML = `
@@ -134,10 +120,7 @@
                         </div>
                     `;
 
-                    // B. POPULATE DYNAMIC REAL EPISODE LIST (TVDB chronological numbering)
-                    queueListContainer.innerHTML = ''; // Wipe loading indicator text
-                    
-                    // Convert episodic object dictionary directly into an iteration array
+                    queueListContainer.innerHTML = ''; 
                     const trueEpisodesList = Object.values(dataset.episodes);
 
                     if (trueEpisodesList.length === 0) {
@@ -145,7 +128,6 @@
                         return;
                     }
 
-                    // Update metadata indicators automatically
                     countBadge.textContent = `01 / ${trueEpisodesList.length}`;
 
                     trueEpisodesList.forEach((episode, index) => {
@@ -156,10 +138,7 @@
                             : 'bg-zinc-900/30 border-zinc-900 hover:bg-zinc-900/80 hover:border-zinc-800 text-zinc-300'
                         }`;
 
-                        // Pull real thumbnail captures provided by TMDb/TVDB pipelines
                         const epThumbnail = episode.image || imgUrl || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=150';
-                        
-                        // Pull real English episodic title entries
                         const trueEpisodeName = episode.title.en || `Episode ${episode.episode}`;
 
                         rowItem.innerHTML = `
@@ -173,7 +152,6 @@
                             </div>
                         `;
 
-                        // Interactive video alternate swapping loop actions
                         rowItem.addEventListener('click', () => {
                             Array.from(queueListContainer.children).forEach(child => {
                                 child.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition duration-200 group bg-zinc-900/30 border-zinc-900 hover:bg-zinc-900/80 hover:border-zinc-800 text-zinc-300";
@@ -182,7 +160,6 @@
                             rowItem.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition duration-200 group bg-indigo-600/10 border-indigo-500/30 text-indigo-400";
                             countBadge.textContent = `${episode.episode < 10 ? '0' + episode.episode : episode.episode} / ${trueEpisodesList.length}`;
                             
-                            // Alternates streaming tracks based on numeric math loops
                             internalVideoSource.src = (episode.episode % 2 === 0) ? fallbackStreams[1] : fallbackStreams[0];
                             mainVideoNode.load();
                             player.play();
@@ -197,7 +174,6 @@
                     executeLocalStaticFallback();
                 });
         } else {
-            // Execute structural default layout fallback if index pages did not provide mal_id parameters
             executeLocalStaticFallback();
         }
 
