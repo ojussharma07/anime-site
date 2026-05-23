@@ -117,15 +117,54 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }
 
-    function executeSearch(query) {
-        if (gridHeader) gridHeader.textContent = `Search Results: "${query}"`;
-        if (searchInput) searchInput.value = query;
+    // --- ADVANCED FILTERED SEARCH ---
+    function executeAdvancedSearch(baseQuery = null) {
+        // Grab values from inputs
+        const searchVal = searchInput ? searchInput.value.trim() : "";
+        const query = baseQuery || searchVal;
+        
+        // Grab filter values (Check if they exist on the page first)
+        const typeEl = document.getElementById('filter-type');
+        const genreEl = document.getElementById('filter-genre');
+        const statusEl = document.getElementById('filter-status');
+        const sortEl = document.getElementById('filter-sort');
+
+        const type = typeEl ? typeEl.value : "";
+        const genre = genreEl ? genreEl.value : "";
+        const status = statusEl ? statusEl.value : "";
+        const sort = sortEl ? sortEl.value : "";
+
+        // Build the dynamic URL
+        let url = `https://api.jikan.moe/v4/anime?limit=24&sfw`;
+        
+        if (query) url += `&q=${encodeURIComponent(query)}`;
+        if (type) url += `&type=${type}`;
+        if (genre) url += `&genres=${genre}`;
+        if (status) url += `&status=${status}`;
+        
+        // Default to desc sorting if a specific parameter is selected to show best/newest first
+        if (sort) {
+            url += `&order_by=${sort}&sort=desc`;
+        }
+
+        // Update UI
+        if (gridHeader) {
+            if (query) gridHeader.textContent = `Search Results: "${query}"`;
+            else if (type || genre || status || sort) gridHeader.textContent = "Filtered Results";
+            else gridHeader.textContent = "All Anime";
+        }
+        
         if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Searching...</p>`;
-        fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=24&sfw`)
+        
+        // Fetch
+        fetch(url)
             .then(res => res.json())
             .then(data => {
                 renderGrid(data?.data || []);
                 if (gridHeader) gridHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            })
+            .catch(err => {
+                if (animeGrid) animeGrid.innerHTML = `<p class="text-red-500 col-span-full text-center py-10">Rate limit exceeded or search failed.</p>`;
             });
     }
 
