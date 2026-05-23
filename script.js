@@ -191,21 +191,24 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // 5. INITIALIZATION LOGIC (Checks the URL parameters from index.html)
+    // 5. INITIALIZATION LOGIC (Checks the URL parameters)
     const urlParams = new URLSearchParams(window.location.search);
     const searchQuery = urlParams.get('q');
     const viewQuery = urlParams.get('view');
+    const genreIdQuery = urlParams.get('genre_id');
+    const genreNameQuery = urlParams.get('genre_name');
 
     if (searchQuery) {
-        // If the user searched from the landing page
         executeSearch(searchQuery);
-        // We still need to load the hero banner, so just load top anime in the background but don't overwrite the grid header
         fetch("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=1").then(res => res.json()).then(data => {
             if(data.data[0]) {
                 heroTitle.textContent = data.data[0].title;
                 heroDesc.textContent = data.data[0].synopsis;
             }
         });
+    } else if (genreIdQuery && genreNameQuery) {
+        // NEW: If a genre was clicked on the genres.html page, fetch it immediately!
+        fetchByGenre(genreIdQuery, genreNameQuery.replace(/_/g, ' '));
     } else if (viewQuery === 'ongoing') {
         fetchSpecialView("Ongoing Anime", "https://api.jikan.moe/v4/seasons/now?limit=24");
     } else if (viewQuery === 'upcoming') {
@@ -213,14 +216,11 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (viewQuery === 'movies') {
         fetchSpecialView("Anime Movies", "https://api.jikan.moe/v4/anime?type=movie&order_by=popularity&sort=asc&limit=24");
     } else if (viewQuery === 'recent') {
-        // Fallback to recent episodes/seasons
         fetchSpecialView("Recently Updated", "https://api.jikan.moe/v4/seasons/now?limit=24");
     } else if (viewQuery === 'shuffle') {
-        // Grab a random page of popular anime
         const randomPage = Math.floor(Math.random() * 10) + 1;
         fetchSpecialView("Random Selection", `https://api.jikan.moe/v4/top/anime?limit=24&page=${randomPage}`);
     } else {
-        // Standard default load if they just clicked "Watch Now"
         loadTopAnime();
     }
 });
