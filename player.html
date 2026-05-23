@@ -21,7 +21,6 @@
             width: 100% !important;
         }
         
-        /* Ensure background loads cleanly behind the overlay */
         body {
             background-color: #09090b;
         }
@@ -87,7 +86,6 @@
         document.getElementById('main-anime-title').textContent = title;
         document.title = `Watch ${title}`;
 
-        const mainVideoNode = document.getElementById('player');
         const queueListContainer = document.getElementById('episode-scroll-list');
         const countBadge = document.getElementById('episode-count-badge');
 
@@ -146,18 +144,25 @@
                         `;
 
                         rowItem.addEventListener('click', () => {
-                            // Update active state
                             Array.from(queueListContainer.children).forEach(c => c.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition bg-zinc-900/30 border-zinc-900 text-zinc-300");
                             rowItem.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition bg-indigo-600/10 border-indigo-500/30 text-indigo-400";
                             countBadge.textContent = `${ep.mal_id < 10 ? '0' + ep.mal_id : ep.mal_id} / ${episodes.length}`;
                             
-                            // Safe fallback file switching (Guaranteed to play)
                             const videoUrl = (ep.mal_id % 2 === 0) 
                                 ? "https://vjs.zencdn.net/v/oceans.mp4" 
                                 : "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
                             
-                            mainVideoNode.src = videoUrl;
-                            mainVideoNode.load();
+                            // THE FIX: Safely passing the source directly through Plyr's API
+                            player.source = {
+                                type: 'video',
+                                sources: [
+                                    {
+                                        src: videoUrl,
+                                        type: 'video/mp4',
+                                    }
+                                ],
+                            };
+                            
                             player.play().catch(e => console.log("Autoplay blocked"));
                         });
 
@@ -186,8 +191,17 @@
                         ? "https://vjs.zencdn.net/v/oceans.mp4" 
                         : "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
                     
-                    mainVideoNode.src = videoUrl;
-                    mainVideoNode.load();
+                    // THE FIX: Safely passing the source directly through Plyr's API
+                    player.source = {
+                        type: 'video',
+                        sources: [
+                            {
+                                src: videoUrl,
+                                type: 'video/mp4',
+                            }
+                        ],
+                    };
+
                     player.play().catch(e => console.log("Autoplay blocked"));
                 });
                 
