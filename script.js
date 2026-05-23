@@ -108,4 +108,134 @@ document.addEventListener("DOMContentLoaded", () => {
     // 3. API Fetchers
     function loadTopAnime() {
         if (gridHeader) gridHeader.textContent = "Trending Now";
-        fetch("
+        fetch("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=24")
+            .then(res => res.ok ? res.json() : Promise.reject("Rate Limited"))
+            .then(data => {
+                const animeList = data?.data || [];
+                if (animeList.length > 0) updateHeroBanner(animeList[0]);
+                renderGrid(animeList);
+            })
+            .catch(() => {
+                if (heroTitle) heroTitle.textContent = "Database Offline";
+                if (heroDesc) heroDesc.textContent = "Jikan API rate limit reached. Please wait a few seconds and refresh.";
+            });
+    }
+
+    function executeAdvancedSearch(baseQuery = null) {
+        const searchVal = searchInput ? searchInput.value.trim() : "";
+        const query = baseQuery || searchVal;
+        
+        const typeEl = document.getElementById('filter-type');
+        const genreEl = document.getElementById('filter-genre');
+        const statusEl = document.getElementById('filter-status');
+        const sortEl = document.getElementById('filter-sort');
+
+        const type = typeEl ? typeEl.value : "";
+        const genre = genreEl ? genreEl.value : "";
+        const status = statusEl ? statusEl.value : "";
+        const sort = sortEl ? sortEl.value : "";
+
+        let url = `https://api.jikan.moe/v4/anime?limit=24&sfw`;
+        
+        if (query) url += `&q=${encodeURIComponent(query)}`;
+        if (type) url += `&type=${type}`;
+        if (genre) url += `&genres=${genre}`;
+        if (status) url += `&status=${status}`;
+        if (sort) url += `&order_by=${sort}&sort=desc`;
+
+        if (gridHeader) {
+            if (query) gridHeader.textContent = `Search Results: "${query}"`;
+            else if (type || genre || status || sort) gridHeader.textContent = "Filtered Results";
+            else gridHeader.textContent = "All Anime";
+        }
+        
+        if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Searching...</p>`;
+        
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                const list = data?.data || [];
+                if (list.length > 0) updateHeroBanner(list[0]);
+                renderGrid(list);
+            })
+            .catch(() => {
+                if (animeGrid) animeGrid.innerHTML = `<p class="text-red-500 col-span-full text-center py-10">Rate limit exceeded.</p>`;
+            });
+    }
+
+    function fetchByLetter(letter) {
+        if (gridHeader) gridHeader.textContent = `Shows starting with "${letter === '1' ? '#' : letter}"`;
+        if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Loading...</p>`;
+        fetch(`https://api.jikan.moe/v4/anime?letter=${letter}&order_by=popularity&sort=asc&limit=24`)
+            .then(res => res.json())
+            .then(data => {
+                const list = data?.data || [];
+                if (list.length > 0) updateHeroBanner(list[0]);
+                renderGrid(list);
+            });
+    }
+
+    function fetchByGenre(genreId, genreName) {
+        if (gridHeader) gridHeader.textContent = `${genreName} Anime`;
+        if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Loading...</p>`;
+        fetch(`https://api.jikan.moe/v4/anime?genres=${genreId}&order_by=popularity&sort=asc&limit=24`)
+            .then(res => res.json())
+            .then(data => {
+                const list = data?.data || [];
+                if (list.length > 0) updateHeroBanner(list[0]);
+                renderGrid(list);
+            });
+    }
+
+    function fetchSpecialView(title, url) {
+        if (gridHeader) gridHeader.textContent = title;
+        if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Loading...</p>`;
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                const list = data?.data || [];
+                if (list.length > 0) updateHeroBanner(list[0]);
+                renderGrid(list);
+            })
+            .catch(() => {
+                if (animeGrid) animeGrid.innerHTML = `<p class="text-red-500 col-span-full text-center py-10">Rate limit exceeded.</p>`;
+            });
+    }
+
+    // 4. Attach General Listeners
+    if (searchBtn && searchInput) {
+        searchBtn.addEventListener("click", () => executeAdvancedSearch());
+        searchInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") executeAdvancedSearch();
+        });
+    }
+
+    const filterBtn = document.getElementById('apply-filters-btn');
+    if (filterBtn) filterBtn.addEventListener("click", () => executeAdvancedSearch());
+
+    // 5. INITIALIZATION LOGIC
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchQuery = urlParams.get('q');
+    const viewQuery = urlParams.get('view');
+    const genreIdQuery = urlParams.get('genre_id');
+    const genreNameQuery = urlParams.get('genre_name');
+
+    if (searchQuery) {
+        executeAdvancedSearch(searchQuery);
+    } else if (genreIdQuery && genreNameQuery) {
+        fetchByGenre(genreIdQuery, genreNameQuery.replace(/_/g, ' '));
+    } else if (viewQuery === 'new') {
+        fetchSpecialView("Newly Released", "https://api.jikan.moe/v4/seasons/now?limit=24");
+    } else if (viewQuery === 'ongoing') {
+        fetchSpecialView("Top Ongoing Anime", "https://api.jikan.moe/v4/anime?status=airing&order_by=score&sort=desc&limit=24");
+    } else if (viewQuery === 'upcoming') {
+        fetchSpecialView("Upcoming Releases", "https://api.jikan.moe/v4/seasons/upcoming?limit=24");
+    } else if (viewQuery === 'movies') {
+        fetchSpecialView("Anime Movies", "https://api.jikan.moe/v4/anime?type=movie&order_by=popularity&sort=desc&limit=24");
+    } else if (viewQuery === 'shuffle') {
+        const randomPage = Math.floor(Math.random() * 10) + 1;
+        fetchSpecialView("Random Selection", `https://api.jikan.moe/v4/top/anime?limit=24&page=${randomPage}`);
+    } else {
+        loadTopAnime();
+    }
+});
