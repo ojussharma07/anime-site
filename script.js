@@ -36,10 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (heroPlayBtn) {
             heroPlayBtn.onclick = () => {
-                const safeTitle = encodeURIComponent(anime.title || 'Unknown Title');
-                const safeId = encodeURIComponent(anime.mal_id || '');
-                const safeImg = encodeURIComponent(fallbackImg || '');
-                window.location.href = `player.html?title=${safeTitle}&mal_id=${safeId}&img=${safeImg}`;
+                window.location.href = `info.html?id=${anime.mal_id}`;
             };
         }
     }
@@ -95,10 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
 
             wrapper.addEventListener("click", () => {
-                const safeTitle = encodeURIComponent(anime.title || 'Unknown Title');
-                const safeId = encodeURIComponent(anime.mal_id || '');
-                const safeImg = encodeURIComponent(coverImg);
-                window.location.href = `player.html?title=${safeTitle}&mal_id=${safeId}&img=${safeImg}`;
+                window.location.href = `info.html?id=${anime.mal_id}`;
             });
 
             animeGrid.appendChild(wrapper);
