@@ -5,7 +5,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const heroBanner = document.getElementById("hero-banner");
     const heroPlayBtn = document.getElementById("hero-play-btn");
 
-    // PLUGGED IN YOUR TMDB API KEY HERE
     const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
 
     fetch("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=10")
@@ -19,7 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 heroTitle.textContent = spotlight.title;
                 heroDesc.textContent = spotlight.synopsis || "No description overview listing indexed yet.";
                 
-                // Fetch high-res backdrop wallpaper using TMDb Search
                 fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(spotlight.title)}`)
                     .then(res => res.json())
                     .then(tmdbSearch => {
@@ -30,9 +28,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     })
                     .catch(err => console.error("TMDb spotlight error:", err));
 
+                // FIXED: Direct parameter reference string map for Hero Button
                 heroPlayBtn.addEventListener("click", () => {
-    window.location.href = `player.html?title=${encodeURIComponent(spotlight.title)}&mal_id=${spotlight.mal_id}&img=${encodeURIComponent(spotlight.images.jpg.large_image_url || spotlight.images.jpg.image_url)}`;
-});
+                    window.location.href = `player.html?title=${encodeURIComponent(spotlight.title)}&mal_id=${spotlight.mal_id}&img=${encodeURIComponent(spotlight.images.jpg.large_image_url || spotlight.images.jpg.image_url)}`;
+                });
             }
 
             animeList.forEach((anime, index) => {
@@ -50,10 +49,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 `;
 
-               // Ensure this exact structure is written near the bottom of script.js:
-wrapper.addEventListener("click", () => {
-    window.location.href = `player.html?title=${encodeURIComponent(anime.title)}&mal_id=${anime.mal_id}&img=${encodeURIComponent(anime.images.jpg.large_image_url || anime.images.jpg.image_url)}`;
-});
+                // FIXED: Ensuring anime.mal_id matches your exact array mapping loop context
+                wrapper.addEventListener("click", () => {
+                    window.location.href = `player.html?title=${encodeURIComponent(anime.title)}&mal_id=${anime.mal_id}&img=${encodeURIComponent(anime.images.jpg.large_image_url || anime.images.jpg.image_url)}`;
+                });
+
                 animeGrid.appendChild(wrapper);
             });
         })
