@@ -8,12 +8,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
 
     fetch("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=10")
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) throw new Error("Network response was not ok");
+            return response.json();
+        })
         .then(data => {
+            if (!data || !data.data) return;
             animeGrid.innerHTML = "";
             const animeList = data.data;
 
-            if(animeList.length > 0) {
+            if (animeList.length > 0) {
                 const spotlight = animeList[0];
                 heroTitle.textContent = spotlight.title;
                 heroDesc.textContent = spotlight.synopsis || "No description overview listing indexed yet.";
@@ -28,7 +32,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     })
                     .catch(err => console.error("TMDb spotlight error:", err));
 
-                // FIXED: Direct parameter reference string map for Hero Button
                 heroPlayBtn.addEventListener("click", () => {
                     window.location.href = `player.html?title=${encodeURIComponent(spotlight.title)}&mal_id=${spotlight.mal_id}&img=${encodeURIComponent(spotlight.images.jpg.large_image_url || spotlight.images.jpg.image_url)}`;
                 });
@@ -39,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 wrapper.className = "relative group cursor-pointer aspect-[2/3] rounded-xl overflow-hidden border border-zinc-900 hover:border-zinc-700 transition duration-300";
                 
                 wrapper.innerHTML = `
-                    <img src="${anime.images.jpg.large_image_url || anime.images.jpg.image_url}" alt="${anime.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                    <img src="${anime.images.jpg.large_image_url || anime.images.jpg.image_url}" alt="${anime.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy">
                     <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent flex flex-col justify-end p-3 opacity-90">
                         <h3 class="font-bold text-xs md:text-sm line-clamp-1 text-white">${anime.title}</h3>
                         <p class="text-[10px] text-zinc-400 mt-0.5">★ ${anime.score || 'N/A'} • ${anime.type}</p>
@@ -49,7 +52,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 `;
 
-                // FIXED: Ensuring anime.mal_id matches your exact array mapping loop context
                 wrapper.addEventListener("click", () => {
                     window.location.href = `player.html?title=${encodeURIComponent(anime.title)}&mal_id=${anime.mal_id}&img=${encodeURIComponent(anime.images.jpg.large_image_url || anime.images.jpg.image_url)}`;
                 });
