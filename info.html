@@ -27,7 +27,6 @@
         <div class="absolute inset-0 bg-gradient-to-r from-[#09090b] via-[#09090b]/60 to-transparent z-10"></div>
 
         <div class="relative z-20 max-w-7xl mx-auto px-4 w-full flex flex-col md:flex-row items-end md:items-center gap-8">
-            
             <div class="hidden md:block w-56 shrink-0 rounded-xl overflow-hidden border border-zinc-800 shadow-2xl shadow-black">
                 <img id="poster-img" src="" alt="Poster" class="w-full h-auto object-cover opacity-0 transition-opacity duration-700">
             </div>
@@ -53,7 +52,6 @@
     </section>
 
     <main class="relative z-20 max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
         <div class="lg:col-span-2 space-y-6">
             <h2 class="text-xl font-black tracking-tight text-white uppercase border-b border-zinc-900 pb-3">Official Trailer</h2>
             <div id="trailer-container" class="w-full aspect-video bg-black rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl relative flex items-center justify-center">
@@ -67,7 +65,6 @@
                 <p class="text-zinc-500 text-sm">Loading cast records...</p>
             </div>
         </div>
-
     </main>
 
     <script>
@@ -76,10 +73,9 @@
         const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
 
         if (!animeId) {
-            window.location.href = 'home.html'; // Kick them out if no ID is provided
+            window.location.href = 'home.html'; 
         }
 
-        // 1. Fetch the main Anime Details
         fetch(`https://api.jikan.moe/v4/anime/${animeId}/full`)
             .then(res => res.json())
             .then(data => {
@@ -87,14 +83,17 @@
                 const title = anime.title;
                 const coverImg = anime.images?.jpg?.large_image_url || '';
                 
-                // Update Text
                 document.title = `${title} — Anime.TV`;
                 document.getElementById('anime-title').textContent = title;
-                document.getElementById('anime-synopsis').textContent = anime.synopsis || "No synopsis available.";
+                
+                // Clean synopsis
+                let desc = anime.synopsis || "No synopsis available.";
+                desc = desc.replace(/\[Written by MAL Rewrite\]/gi, '').trim();
+                document.getElementById('anime-synopsis').textContent = desc;
+                
                 document.getElementById('poster-img').src = coverImg;
                 document.getElementById('poster-img').classList.remove('opacity-0');
 
-                // Build Meta Badges (Score, Rating, Year, Episodes)
                 const badgesHtml = `
                     <span class="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2 py-0.5 rounded flex items-center gap-1">★ ${anime.score || 'N/A'}</span>
                     <span class="bg-zinc-800 border border-zinc-700 px-2 py-0.5 rounded">${anime.rating ? anime.rating.split(' ')[0] : 'NR'}</span>
@@ -104,45 +103,70 @@
                 `;
                 document.getElementById('meta-badges').innerHTML = badgesHtml;
 
-                // Load YouTube Trailer
+                // 1. Load Japanese Trailer as Fallback
                 if (anime.trailer && anime.trailer.embed_url) {
                     document.getElementById('trailer-container').innerHTML = `
                         <iframe src="${anime.trailer.embed_url}?autoplay=0&mute=0" class="w-full h-full" frameborder="0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                     `;
                 }
 
-                // Wire up the Play Button! Passes data securely to player.html
                 document.getElementById('play-btn').addEventListener('click', () => {
                     const safeTitle = encodeURIComponent(title);
                     const safeImg = encodeURIComponent(coverImg);
                     window.location.href = `player.html?title=${safeTitle}&mal_id=${anime.mal_id}&img=${safeImg}`;
                 });
 
-                // Fetch HD Backdrop from TMDB
-                fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}`)
+                // 2. TMDb Advanced Fetch (Backdrop + English Trailer)
+                const tmdbType = anime.type === 'Movie' ? 'movie' : 'tv';
+                
+                fetch(`https://api.themoviedb.org/3/search/${tmdbType}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}`)
                     .then(res => res.json())
                     .then(tmdb => {
                         const backdrop = document.getElementById('backdrop');
-                        if (tmdb.results && tmdb.results[0] && tmdb.results[0].backdrop_path) {
-                            backdrop.style.backgroundImage = `url('https://image.tmdb.org/t/p/original${tmdb.results[0].backdrop_path}')`;
+                        if (tmdb.results && tmdb.results.length > 0) {
+                            const tmdbId = tmdb.results[0].id;
+
+                            // Apply Backdrop
+                            if (tmdb.results[0].backdrop_path) {
+                                backdrop.style.backgroundImage = `url('https://image.tmdb.org/t/p/original${tmdb.results[0].backdrop_path}')`;
+                            } else if (anime.trailer?.images?.maximum_image_url) {
+                                backdrop.style.backgroundImage = `url('${anime.trailer.images.maximum_image_url}')`;
+                            }
+
+                            // 3. Search for English Trailer
+                            fetch(`https://api.themoviedb.org/3/${tmdbType}/${tmdbId}/videos?api_key=${TMDB_API_KEY}&language=en-US`)
+                                .then(vRes => vRes.json())
+                                .then(videoData => {
+                                    if (videoData.results && videoData.results.length > 0) {
+                                        // Look for the official English trailer
+                                        let engTrailer = videoData.results.find(v => v.type === 'Trailer' && v.site === 'YouTube');
+                                        
+                                        // Overwrite the Japanese fallback with the English version
+                                        if (engTrailer) {
+                                            document.getElementById('trailer-container').innerHTML = `
+                                                <iframe src="https://www.youtube.com/embed/${engTrailer.key}?autoplay=0&mute=0" class="w-full h-full" frameborder="0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                            `;
+                                        }
+                                    }
+                                }).catch(e => console.log("No English trailer found"));
+
                         } else if (anime.trailer?.images?.maximum_image_url) {
                             backdrop.style.backgroundImage = `url('${anime.trailer.images.maximum_image_url}')`;
                         }
-                    }).catch(() => console.log("TMDB backdrop failed"));
+                    }).catch(() => console.log("TMDB fetch failed"));
             })
             .catch(err => {
                 document.getElementById('anime-title').textContent = "Database Offline";
-                document.getElementById('anime-synopsis').textContent = "Failed to load anime details. Rate limit may be exceeded.";
+                document.getElementById('anime-synopsis').textContent = "Failed to load anime details.";
             });
 
-        // 2. Fetch the Cast & Characters
+        // Fetch Characters
         fetch(`https://api.jikan.moe/v4/anime/${animeId}/characters`)
             .then(res => res.json())
             .then(data => {
                 const charList = document.getElementById('character-list');
                 charList.innerHTML = '';
                 
-                // Only take the top 8 characters
                 const mainCast = data.data.slice(0, 8);
                 
                 if(mainCast.length === 0) {
@@ -155,7 +179,6 @@
                     const charImg = castItem.character.images?.jpg?.image_url;
                     const role = castItem.role;
                     
-                    // Find the Japanese Voice Actor if available
                     let vaName = "Unknown VA";
                     if (castItem.voice_actors && castItem.voice_actors.length > 0) {
                         const jpVA = castItem.voice_actors.find(va => va.language === 'Japanese');
