@@ -8,7 +8,7 @@
     <style>
         /* Custom CSS to handle the background image properly */
         .bg-start {
-            background-image: url('start-bg.jpg'); /* Make sure your image is named start-bg.jpg */
+            background-image: url('start-bg.jpg'); 
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -24,18 +24,16 @@
     </div>
 
     <header class="relative z-10 w-full pt-8 px-4 flex justify-center">
-        <nav class="hidden md:flex items-center gap-8 text-xs font-black tracking-widest text-zinc-300">
-            <a href="home.html" class="hover:text-white transition flex items-center gap-2">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>
-            </a>
-            <a href="home.html?view=shuffle" class="hover:text-white transition flex items-center gap-2">
+        <nav class="hidden md:flex items-center gap-8 text-[13px] font-bold tracking-widest text-zinc-400">
+            <a href="home.html?view=shuffle" class="hover:text-white transition flex items-center gap-2" title="Random Anime">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
             </a>
+            
             <a href="genres.html" class="hover:text-white transition">GENRES</a>
             <a href="home.html?view=movies" class="hover:text-white transition">TYPES</a>
-            <a href="home.html?view=upcoming" class="hover:text-white transition">NEW RELEASES</a>
+            <a href="home.html?view=new" class="hover:text-white transition">NEW RELEASES</a>
+            <a href="history.html" class="text-white relative after:content-[''] after:absolute after:-bottom-2 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-indigo-500 after:rounded-full transition">HISTORY</a>
             <a href="home.html?view=ongoing" class="hover:text-white transition">ONGOING</a>
-            <a href="history.html" class="hover:text-white transition">RECENT</a>
         </nav>
     </header>
 
