@@ -21,8 +21,7 @@
                             A-Z List <span class="text-[9px]">▼</span>
                         </button>
                         <div class="absolute top-full left-0 mt-2 w-80 bg-[#09090b] border border-zinc-800 rounded-xl shadow-2xl p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                            <div id="alpha-index" class="flex flex-wrap gap-1.5">
-                                </div>
+                            <div id="alpha-index" class="flex flex-wrap gap-1.5"></div>
                         </div>
                     </div>
 
@@ -31,8 +30,7 @@
                             Genres <span class="text-[9px]">▼</span>
                         </button>
                         <div class="absolute top-full left-0 mt-2 w-96 bg-[#09090b] border border-zinc-800 rounded-xl shadow-2xl p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                            <div id="genre-list" class="flex flex-wrap gap-2">
-                                </div>
+                            <div id="genre-list" class="flex flex-wrap gap-2"></div>
                         </div>
                     </div>
 
@@ -57,3 +55,17 @@
                 ▶ Watch Now
             </button>
         </div>
+    </section>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <div class="flex items-center justify-between mb-6 border-b border-zinc-900 pb-4">
+            <h2 id="grid-header" class="text-xl md:text-2xl font-black tracking-tight text-white uppercase">Trending Now</h2>
+        </div>
+        <div id="anime-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
+            <p class="text-zinc-500 text-sm">Initializing catalog...</p>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
