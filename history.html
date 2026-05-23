@@ -2,39 +2,70 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Anime.TV — History</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anime.TV — Watch History</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-[#09090b] text-zinc-100 min-h-screen p-8">
-    <div class="max-w-7xl mx-auto">
-        <div class="flex justify-between items-center mb-8 border-b border-zinc-800 pb-4">
-            <h1 class="text-3xl font-black">Watch History</h1>
-            <a href="home.html" class="bg-indigo-600 px-6 py-2 rounded-lg font-bold hover:bg-indigo-500 transition">Back to Home</a>
-        </div>
+<body class="bg-[#09090b] text-zinc-100 font-sans min-h-screen selection:bg-indigo-500 selection:text-white flex flex-col">
 
-        <div id="history-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <p class="text-zinc-500">No watch history found.</p>
+    <header class="absolute top-0 w-full z-50 px-4 py-4 bg-gradient-to-b from-black/90 to-transparent">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <a href="home.html" class="text-zinc-300 hover:text-white text-sm font-bold transition flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-4 py-2 rounded-lg hover:bg-white/10">
+                &larr; Back to Browse
+            </a>
+            <span class="text-xl font-black tracking-tight text-white cursor-pointer" onclick="window.location.href='index.html'">Anime<span class="text-indigo-500">.TV</span></span>
         </div>
-    </div>
+    </header>
+
+    <section class="relative w-full h-[50vh] flex items-center justify-start pb-12 border-b border-zinc-900" style="background-image: linear-gradient(to right, rgba(9,9,11,1) 10%, rgba(9,9,11,0.4) 50%, rgba(9,9,11,0.8) 100%), url('https://s4.anilist.co/file/anilistcdn/media/anime/banner/101922-YfZhKABsomRy.jpg'); background-size: cover; background-position: center;">
+        <div class="relative z-20 max-w-7xl mx-auto px-4 md:px-12 w-full mt-16">
+            <h1 class="text-4xl md:text-5xl font-black text-white tracking-tight drop-shadow-2xl mb-3">Your Watch History</h1>
+            <p class="text-sm text-zinc-300 max-w-md leading-relaxed font-medium">Your viewing log is completely empty. Start exploring to build your history.</p>
+        </div>
+    </section>
+
+    <main class="max-w-7xl mx-auto px-4 md:px-12 py-12 w-full flex-1">
+        <h2 class="text-sm font-black tracking-widest text-white uppercase mb-6">History Log</h2>
+        
+        <div id="history-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
+            </div>
+    </main>
 
     <script>
-        const history = JSON.parse(localStorage.getItem('animeHistory') || '[]');
-        const container = document.getElementById('history-grid');
-        
-        if (history.length > 0) {
-            container.innerHTML = '';
-            history.reverse().forEach(item => {
-                container.innerHTML += `
-                    <div class="bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 hover:border-indigo-500 transition group cursor-pointer" onclick="window.location.href='player.html?title=${encodeURIComponent(item.title)}&mal_id=${item.id}&img=${encodeURIComponent(item.img)}'">
-                        <img src="${item.img}" class="w-full aspect-[2/3] object-cover">
-                        <div class="p-3">
-                            <h3 class="font-bold text-sm truncate">${item.title}</h3>
-                            <p class="text-[10px] text-zinc-400">Ep: ${item.ep}</p>
-                        </div>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Pull the saved history from the user's browser
+            const history = JSON.parse(localStorage.getItem('animeHistory') || '[]');
+            const container = document.getElementById('history-grid');
+            const subtitle = document.querySelector('section p');
+
+            if (history.length === 0) {
+                // The Empty State (Dashed Box)
+                container.innerHTML = `
+                    <div class="aspect-[2/3] border-2 border-dashed border-zinc-800 rounded-xl flex items-center justify-center bg-zinc-900/20">
+                        <p class="text-zinc-500 text-sm font-bold text-center px-4">No History<br>Found</p>
                     </div>
                 `;
-            });
-        }
+            } else {
+                // Populate the grid and update the subtitle
+                subtitle.textContent = `You have ${history.length} titles in your viewing log. Pick up right where you left off.`;
+                container.innerHTML = '';
+                
+                history.forEach(anime => {
+                    const safeTitle = encodeURIComponent(anime.title);
+                    const safeImg = encodeURIComponent(anime.img);
+                    
+                    container.innerHTML += `
+                        <div class="relative group cursor-pointer aspect-[2/3] rounded-xl overflow-hidden border border-zinc-900 hover:border-indigo-500 transition duration-300 shadow-lg" onclick="window.location.href='info.html?id=${anime.mal_id}'">
+                            <img src="${anime.img}" alt="${anime.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent flex flex-col justify-end p-3 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition duration-300">
+                                <h3 class="font-bold text-xs md:text-sm line-clamp-2 text-white">${anime.title}</h3>
+                                <p class="text-[10px] text-indigo-400 mt-1 font-bold">▶ Resume</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        });
     </script>
 </body>
 </html>
