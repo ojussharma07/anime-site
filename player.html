@@ -6,6 +6,9 @@
     <title>Anime.TV — Stream Player</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
     <style>
         .plyr--full-ui input[type=range] { color: #6366f1; }
         .plyr__control--overlaid { background: #6366f1; }
@@ -45,9 +48,7 @@
         
         <div class="w-full lg:w-3/4 space-y-4 shrink-0">
             <div class="rounded-2xl overflow-hidden bg-black border border-zinc-800 shadow-2xl relative w-full h-[45vh] md:h-[65vh]">
-                <video id="player" playsinline controls class="w-full h-full object-cover">
-                    <source src="https://vjs.zencdn.net/v/oceans.mp4" type="video/mp4" />
-                </video>
+                <video id="player" playsinline controls class="w-full h-full object-cover"></video>
             </div>
             
             <div class="bg-zinc-900/30 border border-zinc-900 rounded-xl p-5 space-y-3">
@@ -82,13 +83,15 @@
         document.title = `Watch ${title}`;
 
         const mainVideoNode = document.getElementById('player');
-        const internalVideoSource = mainVideoNode.querySelector('source');
         const queueListContainer = document.getElementById('episode-scroll-list');
         const countBadge = document.getElementById('episode-count-badge');
 
         const player = new Plyr('#player', { 
             controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'fullscreen']
         });
+
+        // Initialize a variable to hold the HLS instance so we can destroy it when changing episodes
+        let hlsInstance = null;
 
         if (malId) {
             fetch(`https://api.jikan.moe/v4/anime/${malId}/episodes`)
@@ -123,14 +126,34 @@
                             </div>
                         `;
 
+                        // STEP 2 IMPLEMENTED: HLS Streaming Logic applied to episode clicks
                         rowItem.addEventListener('click', () => {
                             Array.from(queueListContainer.children).forEach(c => c.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition bg-zinc-900/30 border-zinc-900 text-zinc-300");
                             rowItem.className = "w-full flex items-center gap-3 p-2.5 rounded-xl border text-left transition bg-indigo-600/10 border-indigo-500/30 text-indigo-400";
                             countBadge.textContent = `${ep.mal_id < 10 ? '0' + ep.mal_id : ep.mal_id} / ${episodes.length}`;
                             
-                            internalVideoSource.src = (ep.mal_id % 2 === 0) ? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" : "https://vjs.zencdn.net/v/oceans.mp4";
-                            mainVideoNode.load();
-                            player.play();
+                            // A live test broadcast .m3u8 link
+                            const liveStreamUrl = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
+                            
+                            // Destroy old HLS instance if it exists before loading a new one
+                            if (hlsInstance) {
+                                hlsInstance.destroy();
+                            }
+
+                            if (Hls.isSupported()) {
+                                hlsInstance = new Hls();
+                                hlsInstance.loadSource(liveStreamUrl);
+                                hlsInstance.attachMedia(mainVideoNode);
+                                
+                                hlsInstance.on(Hls.Events.MANIFEST_PARSED, function () {
+                                    player.play();
+                                });
+                            } else if (mainVideoNode.canPlayType('application/vnd.apple.mpegurl')) {
+                                mainVideoNode.src = liveStreamUrl;
+                                mainVideoNode.addEventListener('loadedmetadata', function () {
+                                    player.play();
+                                });
+                            }
                         });
 
                         queueListContainer.appendChild(rowItem);
