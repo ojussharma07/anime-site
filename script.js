@@ -201,15 +201,21 @@ document.addEventListener("DOMContentLoaded", () => {
     // 4. Attach General Listeners
     if (searchBtn && searchInput) {
         searchBtn.addEventListener("click", () => {
-            const query = searchInput.value.trim();
-            if (query) executeSearch(query);
+            executeAdvancedSearch();
         });
 
         searchInput.addEventListener("keypress", (e) => {
             if (e.key === "Enter") {
-                const query = searchInput.value.trim();
-                if (query) executeSearch(query);
+                executeAdvancedSearch();
             }
+        });
+    }
+
+    // Attach listener for the new Filter button
+    const filterBtn = document.getElementById('apply-filters-btn');
+    if (filterBtn) {
+        filterBtn.addEventListener("click", () => {
+            executeAdvancedSearch();
         });
     }
 
