@@ -13,12 +13,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
 
-    // 1. Build the A-Z Index Dropdown Menu
+    // 1. Build Dropdowns
     const letters = ['All', '#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
     letters.forEach(letter => {
         const btn = document.createElement("button");
         btn.textContent = letter;
-        // Compact square styling for the dropdown
         const defaultClass = "w-8 h-8 flex items-center justify-center rounded bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs hover:bg-rose-600 hover:text-white hover:border-rose-600 transition duration-200";
         const activeClass = "w-8 h-8 flex items-center justify-center rounded bg-rose-600 border border-rose-600 text-white text-xs transition duration-200";
         
@@ -38,7 +37,6 @@ document.addEventListener("DOMContentLoaded", () => {
         alphaIndex.appendChild(btn);
     });
 
-    // 2. Build the Genre Dropdown Menu
     const genres = [
         { id: 1, name: "Action" }, { id: 2, name: "Adventure" }, { id: 4, name: "Comedy" },
         { id: 8, name: "Drama" }, { id: 10, name: "Fantasy" }, { id: 14, name: "Horror" },
@@ -48,7 +46,6 @@ document.addEventListener("DOMContentLoaded", () => {
     genres.forEach(genre => {
         const btn = document.createElement("button");
         btn.textContent = genre.name;
-        // Compact pill styling for the dropdown
         const defaultClass = "px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-indigo-600 hover:text-white text-[11px] font-bold transition duration-200";
         const activeClass = "px-3 py-1.5 rounded bg-indigo-600 border border-indigo-600 text-white text-[11px] font-bold transition duration-200";
         
@@ -63,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
         genreList.appendChild(btn);
     });
 
-    // Reusable Grid Renderer
+    // 2. Render Grid
     function renderGrid(animeList) {
         animeGrid.innerHTML = "";
         if (!animeList || animeList.length === 0) {
@@ -96,12 +93,16 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Default Load
+    // 3. API Fetchers with Crash Protection
     function loadTopAnime() {
         gridHeader.textContent = "Trending Now";
         fetch("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=24")
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error("API Rate Limited");
+                return res.json();
+            })
             .then(data => {
+                if (!data || !data.data) throw new Error("No data returned");
                 const animeList = data.data;
 
                 if (animeList.length > 0) {
@@ -116,7 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 const backdropUrl = `https://image.tmdb.org/t/p/original${tmdbSearch.results[0].backdrop_path}`;
                                 heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.4), rgba(9,9,11,0.2)), url('${backdropUrl}')`;
                             }
-                        });
+                        }).catch(() => console.log("TMDb BG skipped"));
 
                     heroPlayBtn.onclick = () => {
                         const safeTitle = encodeURIComponent(spotlight.title || 'Unknown Title');
@@ -126,17 +127,21 @@ document.addEventListener("DOMContentLoaded", () => {
                     };
                 }
                 renderGrid(animeList);
+            })
+            .catch(err => {
+                heroTitle.textContent = "Database Offline";
+                heroDesc.textContent = "Jikan API rate limit reached. Please wait a few seconds and refresh.";
+                animeGrid.innerHTML = `<p class="text-red-500 col-span-full text-center py-10">Rate limit exceeded. Please refresh the page.</p>`;
             });
     }
 
-    // Search Functions
     function executeSearch(query) {
         gridHeader.textContent = `Search Results: "${query}"`;
         animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Searching...</p>`;
         fetch(`https://api.jikan.moe/v4/anime?q=${encodeURIComponent(query)}&limit=24&sfw`)
             .then(res => res.json())
             .then(data => {
-                renderGrid(data.data);
+                renderGrid(data?.data || []);
                 gridHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
     }
@@ -146,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
         animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Loading...</p>`;
         fetch(`https://api.jikan.moe/v4/anime?letter=${letter}&order_by=popularity&sort=asc&limit=24`)
             .then(res => res.json())
-            .then(data => renderGrid(data.data));
+            .then(data => renderGrid(data?.data || []));
     }
 
     function fetchByGenre(genreId, genreName) {
@@ -154,7 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
         animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Loading...</p>`;
         fetch(`https://api.jikan.moe/v4/anime?genres=${genreId}&order_by=popularity&sort=asc&limit=24`)
             .then(res => res.json())
-            .then(data => renderGrid(data.data));
+            .then(data => renderGrid(data?.data || []));
     }
 
     // Attach Listeners
