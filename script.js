@@ -12,6 +12,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
 
+    // --- NEW: DYNAMIC HERO BANNER ENGINE ---
+    // This takes the #1 anime from whatever list you just searched/clicked and makes it the spotlight
+    function updateHeroBanner(anime) {
+        if (!anime || !heroTitle) return;
+        
+        heroTitle.textContent = anime.title;
+        if (heroDesc) heroDesc.textContent = anime.synopsis ? anime.synopsis : "No synopsis overview available.";
+        
+        const fallbackImg = anime.trailer?.images?.maximum_image_url || anime.images?.jpg?.large_image_url;
+        if (heroBanner && fallbackImg) {
+            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.6), rgba(9,9,11,0.2)), url('${fallbackImg}')`;
+        }
+        
+        fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(anime.title)}`)
+            .then(res => res.json())
+            .then(tmdbSearch => {
+                if (tmdbSearch.results && tmdbSearch.results.length > 0 && tmdbSearch.results[0].backdrop_path && heroBanner) {
+                    const backdropUrl = `https://image.tmdb.org/t/p/original${tmdbSearch.results[0].backdrop_path}`;
+                    heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.6), rgba(9,9,11,0.2)), url('${backdropUrl}')`;
+                }
+            }).catch(() => console.log("TMDb BG skipped, using Jikan fallback"));
+
+        if (heroPlayBtn) {
+            heroPlayBtn.onclick = () => {
+                const safeTitle = encodeURIComponent(anime.title || 'Unknown Title');
+                const safeId = encodeURIComponent(anime.mal_id || '');
+                const safeImg = encodeURIComponent(fallbackImg || '');
+                window.location.href = `player.html?title=${safeTitle}&mal_id=${safeId}&img=${safeImg}`;
+            };
+        }
+    }
+
     // 1. Build A-Z Dropdown
     if (alphaIndex) {
         const letters = ['All', '#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
@@ -32,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 } else {
                     fetchByLetter(letter === '#' ? '1' : letter);
                 }
-                gridHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                if (gridHeader) gridHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
             alphaIndex.appendChild(btn);
         });
@@ -76,182 +108,4 @@ document.addEventListener("DOMContentLoaded", () => {
     // 3. API Fetchers
     function loadTopAnime() {
         if (gridHeader) gridHeader.textContent = "Trending Now";
-        fetch("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=24")
-            .then(res => {
-                if (!res.ok) throw new Error("API Rate Limited");
-                return res.json();
-            })
-            .then(data => {
-                if (!data || !data.data) throw new Error("No data returned");
-                const animeList = data.data;
-
-                if (animeList.length > 0 && heroTitle) {
-                    const spotlight = animeList[0];
-                    heroTitle.textContent = spotlight.title;
-                    if (heroDesc) heroDesc.textContent = spotlight.synopsis || "No description overview listing indexed yet.";
-                    
-                    // --- FIX: IMMEDIATELY APPLY THE JIKAN IMAGE SO IT'S NEVER BLACK ---
-                    const fallbackImg = spotlight.trailer?.images?.maximum_image_url || spotlight.images?.jpg?.large_image_url;
-                    if (heroBanner && fallbackImg) {
-                        heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.6), rgba(9,9,11,0.2)), url('${fallbackImg}')`;
-                    }
-                    
-                    // Try to get a cleaner HD backdrop from TMDb
-                    fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(spotlight.title)}`)
-                        .then(res => res.json())
-                        .then(tmdbSearch => {
-                            if (tmdbSearch.results && tmdbSearch.results.length > 0 && tmdbSearch.results[0].backdrop_path && heroBanner) {
-                                const backdropUrl = `https://image.tmdb.org/t/p/original${tmdbSearch.results[0].backdrop_path}`;
-                                heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.4), rgba(9,9,11,0.2)), url('${backdropUrl}')`;
-                            }
-                        }).catch(() => console.log("TMDb BG skipped, using Jikan fallback"));
-
-                    if (heroPlayBtn) {
-                        heroPlayBtn.onclick = () => {
-                            const safeTitle = encodeURIComponent(spotlight.title || 'Unknown Title');
-                            const safeId = encodeURIComponent(spotlight.mal_id || '');
-                            const safeImg = encodeURIComponent((spotlight.images && spotlight.images.jpg && spotlight.images.jpg.large_image_url) ? spotlight.images.jpg.large_image_url : '');
-                            window.location.href = `player.html?title=${safeTitle}&mal_id=${safeId}&img=${safeImg}`;
-                        };
-                    }
-                }
-                renderGrid(animeList);
-            })
-            .catch(err => {
-                if (heroTitle) heroTitle.textContent = "Database Offline";
-                if (heroDesc) heroDesc.textContent = "Jikan API rate limit reached. Please wait a few seconds and refresh.";
-                if (animeGrid) animeGrid.innerHTML = `<p class="text-red-500 col-span-full text-center py-10">Rate limit exceeded. Please refresh the page.</p>`;
-            });
-    }
-
-    // --- ADVANCED FILTERED SEARCH ---
-    function executeAdvancedSearch(baseQuery = null) {
-        const searchVal = searchInput ? searchInput.value.trim() : "";
-        const query = baseQuery || searchVal;
-        
-        const typeEl = document.getElementById('filter-type');
-        const genreEl = document.getElementById('filter-genre');
-        const statusEl = document.getElementById('filter-status');
-        const sortEl = document.getElementById('filter-sort');
-
-        const type = typeEl ? typeEl.value : "";
-        const genre = genreEl ? genreEl.value : "";
-        const status = statusEl ? statusEl.value : "";
-        const sort = sortEl ? sortEl.value : "";
-
-        let url = `https://api.jikan.moe/v4/anime?limit=24&sfw`;
-        
-        if (query) url += `&q=${encodeURIComponent(query)}`;
-        if (type) url += `&type=${type}`;
-        if (genre) url += `&genres=${genre}`;
-        if (status) url += `&status=${status}`;
-        
-        if (sort) {
-            url += `&order_by=${sort}&sort=desc`;
-        }
-
-        if (gridHeader) {
-            if (query) gridHeader.textContent = `Search Results: "${query}"`;
-            else if (type || genre || status || sort) gridHeader.textContent = "Filtered Results";
-            else gridHeader.textContent = "All Anime";
-        }
-        
-        if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Searching...</p>`;
-        
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                renderGrid(data?.data || []);
-                if (gridHeader) gridHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            })
-            .catch(err => {
-                if (animeGrid) animeGrid.innerHTML = `<p class="text-red-500 col-span-full text-center py-10">Rate limit exceeded.</p>`;
-            });
-    }
-
-    function fetchByLetter(letter) {
-        if (gridHeader) gridHeader.textContent = `Shows starting with "${letter === '1' ? '#' : letter}"`;
-        if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Loading...</p>`;
-        fetch(`https://api.jikan.moe/v4/anime?letter=${letter}&order_by=popularity&sort=asc&limit=24`)
-            .then(res => res.json())
-            .then(data => renderGrid(data?.data || []));
-    }
-
-    function fetchByGenre(genreId, genreName) {
-        if (gridHeader) gridHeader.textContent = `${genreName} Anime`;
-        if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Loading...</p>`;
-        fetch(`https://api.jikan.moe/v4/anime?genres=${genreId}&order_by=popularity&sort=asc&limit=24`)
-            .then(res => res.json())
-            .then(data => renderGrid(data?.data || []));
-    }
-
-    function fetchSpecialView(title, url) {
-        if (gridHeader) gridHeader.textContent = title;
-        if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Loading...</p>`;
-        fetch(url)
-            .then(res => res.json())
-            .then(data => {
-                renderGrid(data?.data || []);
-                if (gridHeader) gridHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            })
-            .catch(err => {
-                if (animeGrid) animeGrid.innerHTML = `<p class="text-red-500 col-span-full text-center py-10">Rate limit exceeded.</p>`;
-            });
-    }
-
-    // 4. Attach General Listeners
-    if (searchBtn && searchInput) {
-        searchBtn.addEventListener("click", () => {
-            executeAdvancedSearch();
-        });
-
-        searchInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") {
-                executeAdvancedSearch();
-            }
-        });
-    }
-
-    const filterBtn = document.getElementById('apply-filters-btn');
-    if (filterBtn) {
-        filterBtn.addEventListener("click", () => {
-            executeAdvancedSearch();
-        });
-    }
-
-    // 5. INITIALIZATION LOGIC
-    const urlParams = new URLSearchParams(window.location.search);
-    const searchQuery = urlParams.get('q');
-    const viewQuery = urlParams.get('view');
-    const genreIdQuery = urlParams.get('genre_id');
-    const genreNameQuery = urlParams.get('genre_name');
-
-    if (searchQuery) {
-        executeAdvancedSearch(searchQuery);
-        fetch("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=1").then(res => res.json()).then(data => {
-            if(data.data && data.data[0] && heroTitle && heroDesc) {
-                heroTitle.textContent = data.data[0].title;
-                heroDesc.textContent = data.data[0].synopsis;
-                const fallbackImg = data.data[0].trailer?.images?.maximum_image_url || data.data[0].images?.jpg?.large_image_url;
-                if (heroBanner && fallbackImg) {
-                    heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.6), rgba(9,9,11,0.2)), url('${fallbackImg}')`;
-                }
-            }
-        });
-    } else if (genreIdQuery && genreNameQuery) {
-        fetchByGenre(genreIdQuery, genreNameQuery.replace(/_/g, ' '));
-    } else if (viewQuery === 'new') {
-        fetchSpecialView("Newly Released", "https://api.jikan.moe/v4/seasons/now?limit=24");
-    } else if (viewQuery === 'ongoing') {
-        fetchSpecialView("Top Ongoing Anime", "https://api.jikan.moe/v4/anime?status=airing&order_by=score&sort=desc&limit=24");
-    } else if (viewQuery === 'upcoming') {
-        fetchSpecialView("Upcoming Releases", "https://api.jikan.moe/v4/seasons/upcoming?limit=24");
-    } else if (viewQuery === 'movies') {
-        fetchSpecialView("Anime Movies", "https://api.jikan.moe/v4/anime?type=movie&order_by=popularity&sort=desc&limit=24");
-    } else if (viewQuery === 'shuffle') {
-        const randomPage = Math.floor(Math.random() * 10) + 1;
-        fetchSpecialView("Random Selection", `https://api.jikan.moe/v4/top/anime?limit=24&page=${randomPage}`);
-    } else {
-        loadTopAnime();
-    }
-});
+        fetch("
