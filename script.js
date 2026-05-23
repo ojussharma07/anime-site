@@ -12,13 +12,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
 
-    // --- NEW: DYNAMIC HERO BANNER ENGINE ---
-    // This takes the #1 anime from whatever list you just searched/clicked and makes it the spotlight
+    // --- DYNAMIC HERO BANNER ENGINE ---
     function updateHeroBanner(anime) {
         if (!anime || !heroTitle) return;
         
         heroTitle.textContent = anime.title;
-        if (heroDesc) heroDesc.textContent = anime.synopsis ? anime.synopsis : "No synopsis overview available.";
+        
+        // FIX: Clean and shorten the description
+        if (heroDesc) {
+            let desc = anime.synopsis ? anime.synopsis : "No synopsis overview available.";
+            
+            // Remove the annoying MAL watermark
+            desc = desc.replace(/\[Written by MAL Rewrite\]/gi, '').trim();
+            
+            // Strictly cap the length to 200 characters so it never floods the screen
+            if (desc.length > 200) {
+                desc = desc.substring(0, 200).trim() + "...";
+            }
+            
+            heroDesc.textContent = desc;
+        }
         
         const fallbackImg = anime.trailer?.images?.maximum_image_url || anime.images?.jpg?.large_image_url;
         if (heroBanner && fallbackImg) {
