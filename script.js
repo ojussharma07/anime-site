@@ -11,19 +11,16 @@ document.addEventListener("DOMContentLoaded", () => {
             animeGrid.innerHTML = "";
             const animeList = data.data;
 
-            // Set up the Spotlight Hero banner with the #1 Trending show info
             if(animeList.length > 0) {
                 const spotlight = animeList[0];
                 heroTitle.textContent = spotlight.title;
                 heroDesc.textContent = spotlight.synopsis || "No description overview listing indexed yet.";
                 
-                // Use a high-quality landscape layout fallback if background banners aren't in standard endpoints
                 heroPlayBtn.addEventListener("click", () => {
-                    window.location.href = `player.html?title=${encodeURIComponent(spotlight.title)}&mal_id=${spotlight.mal_id}&img=${encodeURIComponent(spotlight.images.jpg.large_image_url)}`;
+                    window.location.href = `player.html?title=${encodeURIComponent(spotlight.title)}&mal_id=${spotlight.mal_id}&img=${encodeURIComponent(spotlight.images.jpg.large_image_url || spotlight.images.jpg.image_url)}`;
                 });
             }
 
-            // Populate horizontal ranking system cards
             animeList.forEach((anime, index) => {
                 const wrapper = document.createElement("div");
                 wrapper.className = "relative group cursor-pointer aspect-[2/3] rounded-xl overflow-hidden border border-zinc-900 hover:border-zinc-700 transition duration-300";
@@ -39,14 +36,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                 `;
 
+                // CRITICAL FIX: Explicitly passing mal_id in the URL parameter line here
                 wrapper.addEventListener("click", () => {
-    window.location.href = `player.html?title=${encodeURIComponent(anime.title)}&mal_id=${anime.mal_id}&img=${encodeURIComponent(anime.images.jpg.large_image_url || anime.images.jpg.image_url)}`;
-});
+                    window.location.href = `player.html?title=${encodeURIComponent(anime.title)}&mal_id=${anime.mal_id}&img=${encodeURIComponent(anime.images.jpg.large_image_url || anime.images.jpg.image_url)}`;
+                });
+
                 animeGrid.appendChild(wrapper);
             });
         })
         .catch(err => {
-            console.error("Grid assembly network breakdown: ", err);
-            animeGrid.innerHTML = `<p class="text-xs text-zinc-500">System syncing paused. Retry.</p>`;
+            console.error("Grid assembly error: ", err);
+            animeGrid.innerHTML = `<p class="text-xs text-zinc-500">System syncing paused.</p>`;
         });
 });
