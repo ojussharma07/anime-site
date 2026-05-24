@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     // --- ACTIVE NAV TEXT ---
+    // Automatically highlights the current page in the navigation bar
     const navLinks = document.querySelectorAll('.nav-link');
     navLinks.forEach(link => {
         if (link.href === window.location.href || (window.location.href.includes('?') && link.href.includes(window.location.search))) {
@@ -15,6 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const heroDesc = document.getElementById("hero-desc");
     const heroBanner = document.getElementById("hero-banner");
     const heroPlayBtn = document.getElementById("hero-play-btn");
+    
     const searchInput = document.getElementById("search-input");
     const searchBtn = document.getElementById("search-btn");
     const alphaIndex = document.getElementById("alpha-index");
@@ -25,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Global variable to track the current API request for pagination
     let currentApiUrl = "";
 
-    // --- HERO BANNER ---
+    // --- HERO BANNER ENGINE ---
     function updateHeroBanner(anime) {
         if (!anime || !heroTitle) return;
         
@@ -47,6 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
             heroPlayBtn.onclick = () => window.location.href = `info.html?id=${anime.mal_id}`;
         }
         
+        // Fetch HD Backdrop from TMDB
         fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(anime.title)}`)
             .then(res => res.json())
             .then(tmdbSearch => {
@@ -57,21 +60,23 @@ document.addEventListener("DOMContentLoaded", () => {
             }).catch(() => {});
     }
 
-    // --- A-Z LIST ---
+    // --- A-Z LIST GENERATOR ---
     if (alphaIndex) {
         const letters = ['All', '#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
         letters.forEach(letter => {
             const btn = document.createElement("button");
             btn.textContent = letter;
-            const defaultClass = "w-8 h-8 flex items-center justify-center rounded bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs hover:bg-rose-600 hover:text-white hover:border-rose-600 transition duration-200";
-            const activeClass = "w-8 h-8 flex items-center justify-center rounded bg-rose-600 border border-rose-600 text-white text-xs transition duration-200";
+            const defaultClass = "w-8 h-8 flex items-center justify-center rounded bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs hover:bg-rose-600 hover:text-white hover:border-rose-600 transition duration-200 cursor-pointer";
+            const activeClass = "w-8 h-8 flex items-center justify-center rounded bg-rose-600 border border-rose-600 text-white text-xs transition duration-200 cursor-pointer";
             btn.className = letter === 'All' ? activeClass : defaultClass;
             
             btn.addEventListener("click", () => {
                 if (!animeGrid) {
+                    // Redirect to home if used on landing page or history page
                     window.location.href = `home.html?letter=${letter === '#' ? '1' : letter}`;
                     return;
                 }
+                
                 Array.from(alphaIndex.children).forEach(c => c.className = defaultClass);
                 btn.className = activeClass;
                 
@@ -87,7 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- MAIN GRID RENDERER ---
+    // --- MAIN GRID RENDERER (With Duplicate Fix) ---
     function renderGrid(animeList) {
         if (!animeGrid) return;
         animeGrid.innerHTML = "";
@@ -97,7 +102,12 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        animeList.forEach((anime) => {
+        // NEW: Filter out duplicate anime IDs that the API sometimes returns by mistake
+        const uniqueAnimeList = animeList.filter((anime, index, self) =>
+            index === self.findIndex((t) => t.mal_id === anime.mal_id)
+        );
+
+        uniqueAnimeList.forEach((anime) => {
             const wrapper = document.createElement("div");
             wrapper.className = "relative group cursor-pointer aspect-[2/3] rounded-xl overflow-hidden border border-zinc-900 hover:border-zinc-700 transition duration-300 shadow-lg";
             const coverImg = (anime.images && anime.images.jpg && anime.images.jpg.large_image_url) ? anime.images.jpg.large_image_url : '';
@@ -126,7 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let html = "";
 
         const btnBase = "w-11 h-11 flex items-center justify-center rounded-xl font-bold text-sm transition duration-200 cursor-pointer";
-        const btnActive = `${btnBase} bg-[#F05A3F] text-white shadow-lg`; // The orange/coral from your screenshot
+        const btnActive = `${btnBase} bg-[#F05A3F] text-white shadow-lg`; 
         const btnInactive = `${btnBase} bg-[#151518] border border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white`;
 
         let startPage = Math.max(1, currentPage - 2);
@@ -135,7 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentPage <= 2) endPage = Math.min(5, lastPage);
         if (currentPage >= lastPage - 1) startPage = Math.max(1, lastPage - 4);
 
-        // Previous First / Prev
+        // First / Prev
         if (currentPage > 1) {
             html += `<button onclick="goToPage(1)" class="${btnInactive}">«</button>`;
             html += `<button onclick="goToPage(${currentPage - 1})" class="${btnInactive}">‹</button>`;
@@ -159,19 +169,20 @@ document.addEventListener("DOMContentLoaded", () => {
         paginationContainer.innerHTML = html;
     }
 
-    // Expose pagination jump function globally
+    // Global jump function for pagination
     window.goToPage = function(page) {
         fetchAnimeData(currentApiUrl, page);
     };
 
-    // --- MASTER API FETCHER (Handles everything + Pages) ---
+    // --- MASTER API FETCHER ---
+    // Centralized fetcher that handles pagination, grid rendering, and rate-limit recovery
     function fetchAnimeData(baseApiUrl, page = 1) {
-        currentApiUrl = baseApiUrl; // Save for pagination clicks
+        currentApiUrl = baseApiUrl; 
         
         const separator = baseApiUrl.includes('?') ? '&' : '?';
         const finalUrl = `${baseApiUrl}${separator}page=${page}`;
 
-        if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10 font-bold tracking-widest">LOADING PAGE ${page}...</p>`;
+        if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10 font-bold tracking-widest uppercase">Loading Page ${page}...</p>`;
         if (paginationContainer) paginationContainer.innerHTML = "";
         
         fetch(finalUrl)
@@ -179,7 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(data => {
                 const list = data?.data || [];
                 
-                // Only change the Hero banner if we are on page 1
+                // Update Hero banner only if we are on page 1
                 if (page === 1 && list.length > 0) {
                     updateHeroBanner(list[0]);
                 } else if (list.length === 0 && page === 1) {
@@ -190,14 +201,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 renderGrid(list);
                 renderPagination(data?.pagination, page);
                 
-                if (gridHeader) {
-                    // Smooth scroll up to the grid so the user sees the new page
+                if (gridHeader && page > 1) {
                     const y = gridHeader.getBoundingClientRect().top + window.scrollY - 100;
                     window.scrollTo({top: y, behavior: 'smooth'});
                 }
             })
             .catch(() => {
-                if (animeGrid) animeGrid.innerHTML = `<p class="text-red-500 col-span-full text-center py-10 font-bold">API Rate Limit Exceeded. Please wait 2 seconds and refresh.</p>`;
+                if (animeGrid) animeGrid.innerHTML = `<p class="text-red-500 col-span-full text-center py-10 font-bold">API Rate Limit Exceeded. Please wait a few seconds and refresh.</p>`;
             });
     }
 
@@ -220,23 +230,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (gridHeader) gridHeader.textContent = query ? `Search: "${query}"` : "Filtered Results";
         
-        // Pass to the Master Fetcher
+        // Pass to the Master Fetcher (Starting at Page 1)
         fetchAnimeData(url, 1);
     }
 
+    // Attach Search Events
     if (searchBtn && searchInput) {
         searchBtn.addEventListener("click", (e) => { e.preventDefault(); executeAdvancedSearch(); });
         searchInput.addEventListener("keypress", (e) => {
             if (e.key === "Enter") { e.preventDefault(); executeAdvancedSearch(); }
         });
     }
+    
+    // Attach Apply Filters Event
     const filterBtn = document.getElementById('apply-filters-btn');
-    if (filterBtn) filterBtn.addEventListener("click", () => executeAdvancedSearch());
+    if (filterBtn) filterBtn.addEventListener("click", (e) => {
+        e.preventDefault(); 
+        executeAdvancedSearch();
+    });
 
-    // --- MINI COLUMNS (For Home Page Bottom) ---
+    // --- MINI COLUMNS (For Home Page Dashboard) ---
     function buildMiniList(url, containerId) {
         const container = document.getElementById(containerId);
         if(!container) return;
+        
         fetch(url).then(res => res.json()).then(data => {
             const list = data.data.slice(0, 5); 
             container.innerHTML = ""; 
@@ -270,6 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const genreNameQuery = urlParams.get('genre_name');
     const letterQuery = urlParams.get('letter');
 
+    // 1. Process URL commands to load the correct grid data
     if (searchQuery) {
         executeAdvancedSearch(searchQuery);
     } else if (letterQuery) {
@@ -293,14 +311,13 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (viewQuery === 'shuffle') {
         const randomPage = Math.floor(Math.random() * 10) + 1;
         if (gridHeader) gridHeader.textContent = "Random Selection";
-        fetchAnimeData(`https://api.jikan.moe/v4/top/anime?limit=24`); // Base URL, page handled by fetchAnimeData if we pass page, but let's just fetch it as page X
-        setTimeout(() => window.goToPage(randomPage), 100); 
+        fetchAnimeData(`https://api.jikan.moe/v4/top/anime?limit=24`, randomPage); 
     } else {
         if (gridHeader) gridHeader.textContent = "Trending Now";
         fetchAnimeData("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=24");
     }
 
-    // Load bottom columns
+    // 2. Load the 3 Bottom Columns (Staggered timers to prevent API blocks)
     setTimeout(() => buildMiniList("https://api.jikan.moe/v4/seasons/now?limit=5", "col-airing"), 1000);
     setTimeout(() => buildMiniList("https://api.jikan.moe/v4/seasons/upcoming?limit=5", "col-upcoming"), 2000);
     setTimeout(() => buildMiniList("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=5", "col-popular"), 3000);
