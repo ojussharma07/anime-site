@@ -34,12 +34,7 @@
                 </nav>
             </div>
             
-            <div class="flex w-full xl:w-auto items-center justify-end gap-6">
-                <button onclick="window.location.href='history.html'" class="hidden xl:flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 text-xs font-bold rounded-full transition shadow-[0_0_15px_rgba(99,102,241,0.2)] tracking-wider">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    WATCH HISTORY
-                </button>
-
+            <div class="flex w-full xl:w-auto items-center justify-end">
                 <div class="flex items-center bg-[#151518] border border-zinc-800 hover:border-zinc-700 transition rounded-full px-4 py-2 w-full sm:w-[400px] shadow-lg focus-within:ring-2 focus-within:ring-indigo-500/50">
                     <button id="search-btn" class="text-white pr-3 hover:text-indigo-400 transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -52,7 +47,6 @@
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 4a1 1 0 011-1h16a1 1 0 01.74 1.673l-7.116 8.041A2 2 0 0013 14.228V20a1 1 0 01-1.447.894l-4-2A1 1 0 017 18v-3.772a2 2 0 00-.624-1.486L3.26 5.673A1 1 0 013 4z"/></svg>
                             FILTER
                         </button>
-
                         <div class="absolute top-full right-0 pt-6 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                             <div class="bg-[#151518] border border-zinc-800 rounded-xl shadow-2xl p-4 flex flex-col gap-3 cursor-default" onclick="event.preventDefault();">
                                 <p class="text-xs font-black text-zinc-500 uppercase tracking-widest border-b border-zinc-800 pb-2">Advanced Filters</p>
@@ -75,7 +69,6 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </header>
@@ -85,14 +78,13 @@
         <div class="absolute bottom-0 left-0 w-full p-6 md:p-12 max-w-[1400px] mx-auto flex flex-col items-start gap-4 z-10">
             <h1 id="hero-title" class="text-4xl md:text-5xl font-black text-white tracking-tight drop-shadow-2xl max-w-3xl line-clamp-1">Loading Spotlight...</h1>
             <p id="hero-desc" class="text-sm text-zinc-300 max-w-2xl line-clamp-2 leading-relaxed hidden sm:block">Syncing latest database records...</p>
-            <button id="hero-play-btn" class="mt-2 bg-white text-black px-6 py-2.5 rounded-full font-bold text-sm hover:scale-105 transition duration-300 flex items-center gap-2 shadow-lg">
+            <button id="hero-play-btn" class="mt-2 bg-white text-black px-6 py-2.5 rounded-full font-bold text-sm hover:scale-105 transition duration-300 flex items-center gap-2 shadow-lg hidden">
                 ▶ Watch Now
             </button>
         </div>
     </section>
 
     <main class="max-w-[1400px] mx-auto px-6 py-8 flex-1 w-full">
-        
         <div class="mb-12">
             <div class="flex items-center justify-between mb-6 border-b border-zinc-900 pb-4">
                 <h2 id="grid-header" class="text-xl md:text-2xl font-black tracking-tight text-white uppercase">Trending Now</h2>
@@ -108,38 +100,26 @@
                     <h3 class="font-black tracking-wide text-white uppercase flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> New Releases
                     </h3>
-                    <a href="home.html?view=new" class="text-[10px] text-zinc-500 hover:text-white uppercase font-bold tracking-widest transition">View All ↗</a>
                 </div>
-                <div id="col-airing" class="flex flex-col gap-2">
-                    <p class="text-xs text-zinc-500 py-4 text-center">Fetching records...</p>
-                </div>
+                <div id="col-airing" class="flex flex-col gap-2"><p class="text-xs text-zinc-500 py-4 text-center">Fetching records...</p></div>
             </div>
-
             <div class="space-y-4">
                 <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
                     <h3 class="font-black tracking-wide text-white uppercase flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Upcoming
                     </h3>
-                    <a href="home.html?view=upcoming" class="text-[10px] text-zinc-500 hover:text-white uppercase font-bold tracking-widest transition">View All ↗</a>
                 </div>
-                <div id="col-upcoming" class="flex flex-col gap-2">
-                    <p class="text-xs text-zinc-500 py-4 text-center">Fetching records...</p>
-                </div>
+                <div id="col-upcoming" class="flex flex-col gap-2"><p class="text-xs text-zinc-500 py-4 text-center">Fetching records...</p></div>
             </div>
-
             <div class="space-y-4">
                 <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
                     <h3 class="font-black tracking-wide text-white uppercase flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-rose-500"></span> Most Popular
                     </h3>
-                    <a href="home.html" class="text-[10px] text-zinc-500 hover:text-white uppercase font-bold tracking-widest transition">View All ↗</a>
                 </div>
-                <div id="col-popular" class="flex flex-col gap-2">
-                    <p class="text-xs text-zinc-500 py-4 text-center">Fetching records...</p>
-                </div>
+                <div id="col-popular" class="flex flex-col gap-2"><p class="text-xs text-zinc-500 py-4 text-center">Fetching records...</p></div>
             </div>
         </div>
-
     </main>
 
     <footer class="w-full bg-[#050505] border-t border-zinc-900 pt-16 pb-8 mt-auto">
@@ -155,21 +135,7 @@
                     <h4 class="font-black text-white tracking-widest uppercase text-xs mb-4">Navigation</h4>
                     <a href="home.html" class="block text-zinc-400 hover:text-indigo-400 transition">Home</a>
                     <a href="genres.html" class="block text-zinc-400 hover:text-indigo-400 transition">Genres</a>
-                    <a href="home.html?view=movies" class="block text-zinc-400 hover:text-indigo-400 transition">Movies</a>
                 </div>
-                <div class="space-y-3">
-                    <h4 class="font-black text-white tracking-widest uppercase text-xs mb-4">Quick Links</h4>
-                    <a href="home.html?view=new" class="block text-zinc-400 hover:text-indigo-400 transition">Ongoing</a>
-                    <a href="home.html?view=upcoming" class="block text-zinc-400 hover:text-indigo-400 transition">Upcoming</a>
-                    <a href="home.html?view=shuffle" class="block text-zinc-400 hover:text-indigo-400 transition">Random Anime</a>
-                </div>
-            </div>
-        </div>
-        <div class="max-w-[1400px] mx-auto px-6 mt-12 pt-8 border-t border-zinc-900/50 flex flex-col md:flex-row items-center justify-between text-[10px] text-zinc-600">
-            <p>&copy; 2024 Anime.TV. All rights reserved.</p>
-            <div class="flex gap-4 mt-4 md:mt-0">
-                <a href="#" class="hover:text-zinc-400">Terms of Service</a>
-                <a href="#" class="hover:text-zinc-400">Privacy Policy</a>
             </div>
         </div>
     </footer>
