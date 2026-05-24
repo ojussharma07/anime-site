@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
     // --- ACTIVE NAV TEXT ---
-    // Automatically highlights the current page in the navigation bar
     const navLinks = document.querySelectorAll('.nav-link');
     navLinks.forEach(link => {
         if (link.href === window.location.href || (window.location.href.includes('?') && link.href.includes(window.location.search))) {
@@ -16,15 +15,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const heroDesc = document.getElementById("hero-desc");
     const heroBanner = document.getElementById("hero-banner");
     const heroPlayBtn = document.getElementById("hero-play-btn");
-    
     const searchInput = document.getElementById("search-input");
     const searchBtn = document.getElementById("search-btn");
     const alphaIndex = document.getElementById("alpha-index");
     const paginationContainer = document.getElementById("pagination-container");
 
     const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
-    
-    // Global variable to track the current API request for pagination
     let currentApiUrl = "";
 
     // --- HERO BANNER ENGINE ---
@@ -33,7 +29,8 @@ document.addEventListener("DOMContentLoaded", () => {
         
         heroTitle.textContent = anime.title;
         if (heroDesc) {
-            let desc = anime.synopsis ? anime.synopsis : "No synopsis overview available.";
+            // Added robust fallback for unreleased anime
+            let desc = anime.synopsis || anime.background || "No synopsis overview available yet.";
             desc = desc.replace(/\[Written by MAL Rewrite\]/gi, '').trim();
             if (desc.length > 200) desc = desc.substring(0, 200).trim() + "...";
             heroDesc.textContent = desc;
@@ -49,7 +46,6 @@ document.addEventListener("DOMContentLoaded", () => {
             heroPlayBtn.onclick = () => window.location.href = `info.html?id=${anime.mal_id}`;
         }
         
-        // Fetch HD Backdrop from TMDB
         fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(anime.title)}`)
             .then(res => res.json())
             .then(tmdbSearch => {
@@ -72,11 +68,9 @@ document.addEventListener("DOMContentLoaded", () => {
             
             btn.addEventListener("click", () => {
                 if (!animeGrid) {
-                    // Redirect to home if used on landing page or history page
                     window.location.href = `home.html?letter=${letter === '#' ? '1' : letter}`;
                     return;
                 }
-                
                 Array.from(alphaIndex.children).forEach(c => c.className = defaultClass);
                 btn.className = activeClass;
                 
@@ -92,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- MAIN GRID RENDERER (With Duplicate Fix) ---
+    // --- MAIN GRID RENDERER ---
     function renderGrid(animeList) {
         if (!animeGrid) return;
         animeGrid.innerHTML = "";
@@ -102,7 +96,6 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // NEW: Filter out duplicate anime IDs that the API sometimes returns by mistake
         const uniqueAnimeList = animeList.filter((anime, index, self) =>
             index === self.findIndex((t) => t.mal_id === anime.mal_id)
         );
@@ -131,54 +124,37 @@ document.addEventListener("DOMContentLoaded", () => {
             paginationContainer.innerHTML = "";
             return;
         }
-
         const lastPage = paginationData.last_visible_page;
         let html = "";
-
         const btnBase = "w-11 h-11 flex items-center justify-center rounded-xl font-bold text-sm transition duration-200 cursor-pointer";
         const btnActive = `${btnBase} bg-[#F05A3F] text-white shadow-lg`; 
         const btnInactive = `${btnBase} bg-[#151518] border border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white`;
 
         let startPage = Math.max(1, currentPage - 2);
         let endPage = Math.min(lastPage, currentPage + 2);
-        
         if (currentPage <= 2) endPage = Math.min(5, lastPage);
         if (currentPage >= lastPage - 1) startPage = Math.max(1, lastPage - 4);
 
-        // First / Prev
         if (currentPage > 1) {
             html += `<button onclick="goToPage(1)" class="${btnInactive}">«</button>`;
             html += `<button onclick="goToPage(${currentPage - 1})" class="${btnInactive}">‹</button>`;
         }
-
-        // Numbers
         for (let i = startPage; i <= endPage; i++) {
-            if (i === currentPage) {
-                html += `<button class="${btnActive}">${i}</button>`;
-            } else {
-                html += `<button onclick="goToPage(${i})" class="${btnInactive}">${i}</button>`;
-            }
+            if (i === currentPage) html += `<button class="${btnActive}">${i}</button>`;
+            else html += `<button onclick="goToPage(${i})" class="${btnInactive}">${i}</button>`;
         }
-
-        // Next / Last
         if (currentPage < lastPage) {
             html += `<button onclick="goToPage(${currentPage + 1})" class="${btnInactive}">›</button>`;
             html += `<button onclick="goToPage(${lastPage})" class="${btnInactive}">»</button>`;
         }
-
         paginationContainer.innerHTML = html;
     }
 
-    // Global jump function for pagination
-    window.goToPage = function(page) {
-        fetchAnimeData(currentApiUrl, page);
-    };
+    window.goToPage = function(page) { fetchAnimeData(currentApiUrl, page); };
 
     // --- MASTER API FETCHER ---
-    // Centralized fetcher that handles pagination, grid rendering, and rate-limit recovery
     function fetchAnimeData(baseApiUrl, page = 1) {
         currentApiUrl = baseApiUrl; 
-        
         const separator = baseApiUrl.includes('?') ? '&' : '?';
         const finalUrl = `${baseApiUrl}${separator}page=${page}`;
 
@@ -189,15 +165,12 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(res => res.ok ? res.json() : Promise.reject())
             .then(data => {
                 const list = data?.data || [];
-                
-                // Update Hero banner only if we are on page 1
                 if (page === 1 && list.length > 0) {
                     updateHeroBanner(list[0]);
                 } else if (list.length === 0 && page === 1) {
                     if (heroTitle) heroTitle.textContent = "No Results Found";
                     if (heroDesc) heroDesc.textContent = "Try adjusting your search or filters.";
                 }
-
                 renderGrid(list);
                 renderPagination(data?.pagination, page);
                 
@@ -229,33 +202,30 @@ document.addEventListener("DOMContentLoaded", () => {
         if (sortEl && sortEl.value) url += `&order_by=${sortEl.value}&sort=desc`;
 
         if (gridHeader) gridHeader.textContent = query ? `Search: "${query}"` : "Filtered Results";
-        
-        // Pass to the Master Fetcher (Starting at Page 1)
         fetchAnimeData(url, 1);
     }
 
-    // Attach Search Events
     if (searchBtn && searchInput) {
         searchBtn.addEventListener("click", (e) => { e.preventDefault(); executeAdvancedSearch(); });
         searchInput.addEventListener("keypress", (e) => {
             if (e.key === "Enter") { e.preventDefault(); executeAdvancedSearch(); }
         });
     }
-    
-    // Attach Apply Filters Event
     const filterBtn = document.getElementById('apply-filters-btn');
-    if (filterBtn) filterBtn.addEventListener("click", (e) => {
-        e.preventDefault(); 
-        executeAdvancedSearch();
-    });
+    if (filterBtn) filterBtn.addEventListener("click", (e) => { e.preventDefault(); executeAdvancedSearch(); });
 
-    // --- MINI COLUMNS (For Home Page Dashboard) ---
+    // --- MINI COLUMNS ---
     function buildMiniList(url, containerId) {
         const container = document.getElementById(containerId);
         if(!container) return;
         
         fetch(url).then(res => res.json()).then(data => {
-            const list = data.data.slice(0, 5); 
+            // FIXED: Filter out duplicates from the mini-lists!
+            const uniqueList = (data.data || []).filter((anime, index, self) =>
+                index === self.findIndex((t) => t.mal_id === anime.mal_id)
+            );
+            
+            const list = uniqueList.slice(0, 5); 
             container.innerHTML = ""; 
             list.forEach(anime => {
                 const row = document.createElement("div");
@@ -287,7 +257,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const genreNameQuery = urlParams.get('genre_name');
     const letterQuery = urlParams.get('letter');
 
-    // 1. Process URL commands to load the correct grid data
     if (searchQuery) {
         executeAdvancedSearch(searchQuery);
     } else if (letterQuery) {
@@ -317,7 +286,6 @@ document.addEventListener("DOMContentLoaded", () => {
         fetchAnimeData("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=24");
     }
 
-    // 2. Load the 3 Bottom Columns (Staggered timers to prevent API blocks)
     setTimeout(() => buildMiniList("https://api.jikan.moe/v4/seasons/now?limit=5", "col-airing"), 1000);
     setTimeout(() => buildMiniList("https://api.jikan.moe/v4/seasons/upcoming?limit=5", "col-upcoming"), 2000);
     setTimeout(() => buildMiniList("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=5", "col-popular"), 3000);
