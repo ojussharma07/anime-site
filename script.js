@@ -1,17 +1,14 @@
 document.addEventListener("DOMContentLoaded", () => {
-     // --- DYNAMIC ACTIVE NAV TEXT ---
-    // This checks your current URL and colors the correct navigation link
+    // --- DYNAMIC ACTIVE NAV TEXT ---
     const navLinks = document.querySelectorAll('.nav-link');
     navLinks.forEach(link => {
-        // link.href gets the full absolute URL, which we compare to the browser's current URL
-        if (link.href === window.location.href) {
-            // Remove the dull gray
+        if (link.href === window.location.href || (window.location.href.includes('?') && link.href.includes(window.location.search))) {
             link.classList.remove('text-zinc-400');
-            // Change the text to bright indigo and make it slightly thicker
             link.classList.add('text-indigo-400', 'font-black', 'drop-shadow-md');
         }
     });
-    
+
+    // --- ELEMENT SELECTORS ---
     const animeGrid = document.getElementById("anime-grid");
     const gridHeader = document.getElementById("grid-header");
     const heroTitle = document.getElementById("hero-title");
@@ -27,7 +24,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // --- DYNAMIC HERO BANNER ENGINE ---
     function updateHeroBanner(anime) {
-        if (!anime || !heroTitle) return;
+        if (!anime) {
+            loadTopAnime();
+            return;
+        }
+        if (!heroTitle) return;
         
         heroTitle.textContent = anime.title;
         
@@ -57,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // A-Z Dropdown
+    // --- A-Z DROPDOWN BUILDER ---
     if (alphaIndex) {
         const letters = ['All', '#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
         letters.forEach(letter => {
@@ -68,17 +69,25 @@ document.addEventListener("DOMContentLoaded", () => {
             btn.className = letter === 'All' ? activeClass : defaultClass;
             
             btn.addEventListener("click", () => {
+                // If not on a grid page, redirect to home with the letter
+                if (!animeGrid) {
+                    window.location.href = `home.html?letter=${letter === '#' ? '1' : letter}`;
+                    return;
+                }
+                
                 Array.from(alphaIndex.children).forEach(c => c.className = defaultClass);
                 btn.className = activeClass;
+                
                 if (letter === 'All') loadTopAnime();
                 else fetchByLetter(letter === '#' ? '1' : letter);
+                
                 if (gridHeader) gridHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
             alphaIndex.appendChild(btn);
         });
     }
 
-    // MAIN GRID RENDERER
+    // --- MAIN GRID RENDERER ---
     function renderGrid(animeList) {
         if (!animeGrid) return;
         animeGrid.innerHTML = "";
@@ -105,8 +114,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- NEW: MINI COLUMN RENDERER ---
-    // Takes data and builds the sleek horizontal cards for the 3 bottom columns
+    // --- MINI COLUMN RENDERER (For Home Page Bottom Lists) ---
     function buildMiniList(url, containerId) {
         const container = document.getElementById(containerId);
         if(!container) return;
@@ -114,8 +122,8 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch(url)
             .then(res => res.json())
             .then(data => {
-                const list = data.data.slice(0, 5); // Only take top 5
-                container.innerHTML = ""; // clear loading text
+                const list = data.data.slice(0, 5); 
+                container.innerHTML = ""; 
                 
                 list.forEach(anime => {
                     const row = document.createElement("div");
@@ -141,7 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch(() => container.innerHTML = `<p class="text-xs text-red-500 py-4">Failed to load.</p>`);
     }
 
-    // MAIN FETCHERS
+    // --- API FETCHERS ---
     function loadTopAnime() {
         if (gridHeader) gridHeader.textContent = "Trending Now";
         fetch("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=24")
@@ -186,6 +194,18 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }
 
+    function fetchByLetter(letter) {
+        if (gridHeader) gridHeader.textContent = `Shows starting with "${letter === '1' ? '#' : letter}"`;
+        if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Loading...</p>`;
+        fetch(`https://api.jikan.moe/v4/anime?letter=${letter}&order_by=popularity&sort=asc&limit=24`)
+            .then(res => res.json())
+            .then(data => {
+                const list = data?.data || [];
+                if (list.length > 0) updateHeroBanner(list[0]);
+                renderGrid(list);
+            });
+    }
+
     function fetchSpecialView(title, url) {
         if (gridHeader) gridHeader.textContent = title;
         if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">Loading...</p>`;
@@ -198,7 +218,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }
 
-    // Attach Input Listeners
+    // --- EVENT LISTENERS ---
     if (searchBtn && searchInput) {
         searchBtn.addEventListener("click", () => executeAdvancedSearch());
         searchInput.addEventListener("keypress", (e) => {
@@ -208,33 +228,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const filterBtn = document.getElementById('apply-filters-btn');
     if (filterBtn) filterBtn.addEventListener("click", () => executeAdvancedSearch());
 
-    // --- INITIALIZATION ROUTER ---
+    // --- BULLETPROOF INITIALIZATION LOGIC ---
     const urlParams = new URLSearchParams(window.location.search);
     const searchQuery = urlParams.get('q');
     const viewQuery = urlParams.get('view');
     const genreIdQuery = urlParams.get('genre_id');
     const genreNameQuery = urlParams.get('genre_name');
+    const letterQuery = urlParams.get('letter');
 
-    // 1. Load Main Grid
-    if (searchQuery) executeAdvancedSearch(searchQuery);
-    else if (genreIdQuery && genreNameQuery) fetchSpecialView(`${genreNameQuery.replace(/_/g, ' ')} Anime`, `https://api.jikan.moe/v4/anime?genres=${genreIdQuery}&order_by=popularity&sort=asc&limit=24`);
-    else if (viewQuery === 'new') fetchSpecialView("Newly Released", "https://api.jikan.moe/v4/seasons/now?limit=24");
-    else if (viewQuery === 'upcoming') fetchSpecialView("Upcoming Releases", "https://api.jikan.moe/v4/seasons/upcoming?limit=24");
-    else if (viewQuery === 'movies') fetchSpecialView("Anime Movies", "https://api.jikan.moe/v4/anime?type=movie&order_by=popularity&sort=desc&limit=24");
-    else if (viewQuery === 'ongoing') fetchSpecialView("Top Ongoing Anime", "https://api.jikan.moe/v4/anime?status=airing&order_by=score&sort=desc&limit=24");
-    else loadTopAnime();
-
-    // 2. Load the 3 Bottom Columns (Staggered to prevent API bans)
-    setTimeout(() => {
-        buildMiniList("https://api.jikan.moe/v4/seasons/now?limit=5", "col-airing");
-    }, 1000);
-    
-    setTimeout(() => {
-        buildMiniList("https://api.jikan.moe/v4/seasons/upcoming?limit=5", "col-upcoming");
-    }, 2000);
-    
-    setTimeout(() => {
-        buildMiniList("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=5", "col-popular");
-    }, 3000);
-
-});
+    // Force a default banner load if nothing is happening
+    const fetchAndSetBanner = (url) => {
+        fetch(url)
+            .then(res => res.json())
+            .then(data => {
+                const list = data?.data || [];
+                if (list.length >
