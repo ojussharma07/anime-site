@@ -5,17 +5,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const currentUrl = window.location.href;
 
         navLinks.forEach(link => {
-            // Reset state
             link.classList.remove('text-indigo-400', 'font-black', 'drop-shadow-md');
             
-            // If it's a standard link with an href
             if (link.href) {
                 if (link.href === currentUrl || (currentUrl.includes('?') && link.href.includes(window.location.search))) {
                     link.classList.remove('text-zinc-400');
                     link.classList.add('text-indigo-400', 'font-black', 'drop-shadow-md');
                 }
             } 
-            // If it's a Dropdown Button (TYPES or A-Z)
             else if (link.textContent) {
                 const text = link.textContent.toUpperCase();
                 if ((currentUrl.includes('type=') && text.includes('TYPES')) || 
@@ -45,11 +42,40 @@ document.addEventListener("DOMContentLoaded", () => {
     const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
     let currentApiUrl = "";
 
-    // --- HERO BANNER ENGINE ---
-    function updateHeroBanner(anime) {
+    // --- SPOTLIGHT CAROUSEL ENGINE ---
+    let spotlightData = [];
+    let currentSpotlightIndex = 0;
+    let spotlightInterval = null;
+
+    function initSpotlight(animeList) {
+        if (!animeList || animeList.length === 0) return;
+        
+        // Grab the top 5 anime for the carousel (or however many are available)
+        spotlightData = animeList.slice(0, 5);
+        currentSpotlightIndex = 0;
+        
+        renderSpotlight();
+        
+        // Auto-rotate every 7 seconds
+        if (spotlightInterval) clearInterval(spotlightInterval);
+        spotlightInterval = setInterval(() => {
+            currentSpotlightIndex = (currentSpotlightIndex + 1) % spotlightData.length;
+            renderSpotlight();
+        }, 7000);
+    }
+
+    function renderSpotlight() {
+        const anime = spotlightData[currentSpotlightIndex];
         if (!anime || !heroTitle) return;
         
+        // Update Text & Rank
+        const rankDisplay = document.getElementById("spotlight-rank");
+        if (rankDisplay) {
+            rankDisplay.innerHTML = `<span class="text-3xl text-white">#${currentSpotlightIndex + 1}</span> <span class="pt-1">SPOTLIGHT</span>`;
+        }
+        
         heroTitle.textContent = anime.title;
+        
         if (heroDesc) {
             let desc = anime.synopsis || anime.background || "No synopsis overview available yet.";
             desc = desc.replace(/\[Written by MAL Rewrite\]/gi, '').trim();
@@ -57,9 +83,10 @@ document.addEventListener("DOMContentLoaded", () => {
             heroDesc.textContent = desc;
         }
         
+        // Update Background Image
         const fallbackImg = anime.trailer?.images?.maximum_image_url || anime.images?.jpg?.large_image_url;
         if (heroBanner && fallbackImg) {
-            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.6), rgba(9,9,11,0.2)), url('${fallbackImg}')`;
+            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${fallbackImg}')`;
         }
 
         if (heroPlayBtn) {
@@ -67,14 +94,57 @@ document.addEventListener("DOMContentLoaded", () => {
             heroPlayBtn.onclick = () => window.location.href = `info.html?id=${anime.mal_id}`;
         }
         
+        // Fetch HD Backdrop from TMDB
         fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(anime.title)}`)
             .then(res => res.json())
             .then(tmdbSearch => {
                 if (tmdbSearch.results && tmdbSearch.results.length > 0 && tmdbSearch.results[0].backdrop_path && heroBanner) {
                     const backdropUrl = `https://image.tmdb.org/t/p/original${tmdbSearch.results[0].backdrop_path}`;
-                    heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.6), rgba(9,9,11,0.2)), url('${backdropUrl}')`;
+                    heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${backdropUrl}')`;
                 }
             }).catch(() => {});
+
+        // Build the 1-5 Control Cards
+        const controls = document.getElementById("spotlight-controls");
+        const mobileControls = document.getElementById("spotlight-controls-mobile");
+        
+        if (controls && mobileControls) {
+            controls.innerHTML = "";
+            mobileControls.innerHTML = "";
+            
+            spotlightData.forEach((item, index) => {
+                const isActive = index === currentSpotlightIndex;
+                
+                // Desktop 1-5 Card
+                const btn = document.createElement("div");
+                btn.className = `cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-500 w-16 h-24 relative flex items-center justify-center group ${isActive ? 'border-indigo-500 scale-110 shadow-[0_0_20px_rgba(99,102,241,0.5)] z-10' : 'border-zinc-800 opacity-50 hover:opacity-100 hover:border-zinc-500'}`;
+                
+                const img = item.images?.jpg?.image_url || '';
+                btn.innerHTML = `
+                    <div class="absolute inset-0 bg-black/50 group-hover:bg-black/20 transition-all duration-300 z-10 ${isActive ? '!bg-black/20' : ''}"></div>
+                    <img src="${img}" class="absolute inset-0 w-full h-full object-cover z-0">
+                    <span class="relative z-20 font-black text-3xl text-white drop-shadow-[0_2px_5px_rgba(0,0,0,1)]">${index + 1}</span>
+                `;
+                
+                btn.onclick = () => {
+                    currentSpotlightIndex = index;
+                    renderSpotlight();
+                    // Reset timer on manual click
+                    clearInterval(spotlightInterval);
+                    spotlightInterval = setInterval(() => {
+                        currentSpotlightIndex = (currentSpotlightIndex + 1) % spotlightData.length;
+                        renderSpotlight();
+                    }, 7000);
+                };
+                controls.appendChild(btn);
+
+                // Mobile Dot
+                const dot = document.createElement("div");
+                dot.className = `w-2 h-2 rounded-full cursor-pointer transition-all duration-300 ${isActive ? 'bg-indigo-500 w-8' : 'bg-zinc-600'}`;
+                dot.onclick = btn.onclick; // Link dot to same function
+                mobileControls.appendChild(dot);
+            });
+        }
     }
 
     // --- A-Z LIST GENERATOR ---
@@ -186,12 +256,14 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(res => res.ok ? res.json() : Promise.reject())
             .then(data => {
                 const list = data?.data || [];
+                
                 if (page === 1 && list.length > 0) {
-                    updateHeroBanner(list[0]);
+                    initSpotlight(list); // PASSES THE LIST TO SPOTLIGHT GENERATOR
                 } else if (list.length === 0 && page === 1) {
                     if (heroTitle) heroTitle.textContent = "No Results Found";
                     if (heroDesc) heroDesc.textContent = "Try adjusting your search or filters.";
                 }
+                
                 renderGrid(list);
                 renderPagination(data?.pagination, page);
                 
