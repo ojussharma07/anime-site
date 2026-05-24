@@ -6,54 +6,103 @@
     <title>Anime.TV — Watch History</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-[#09090b] text-zinc-100 font-sans min-h-screen selection:bg-indigo-500 selection:text-white flex flex-col">
+<body class="bg-[#09090b] text-zinc-100 font-sans min-h-screen selection:bg-indigo-500 selection:text-white flex flex-col overflow-x-hidden">
 
-    <header class="absolute top-0 w-full z-50 px-4 py-4 bg-gradient-to-b from-black/90 to-transparent">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <a href="home.html" class="text-zinc-300 hover:text-white text-sm font-bold transition flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-4 py-2 rounded-lg hover:bg-white/10">
-                &larr; Back to Browse
-            </a>
-            <span class="text-xl font-black tracking-tight text-white cursor-pointer" onclick="window.location.href='index.html'">Anime<span class="text-indigo-500">.TV</span></span>
+    <header class="w-full bg-[#09090b]/90 backdrop-blur-md border-b border-zinc-900 sticky top-0 z-50 px-6 py-4 shrink-0">
+        <div class="max-w-[1400px] mx-auto flex flex-wrap xl:flex-nowrap items-center justify-between gap-6">
+            <div class="flex items-center gap-10">
+                <span class="text-3xl font-black tracking-tight text-white cursor-pointer" onclick="window.location.href='index.html'">Anime<span class="text-indigo-500">.TV</span></span>
+                <nav class="hidden lg:flex items-center gap-8 text-[13px] font-bold tracking-widest text-zinc-400">
+                    <a href="genres.html" class="nav-link hover:text-white transition uppercase">Genres</a>
+                    <div class="relative group z-50 flex items-center">
+                        <button class="nav-link hover:text-white flex items-center gap-1.5 py-2 transition uppercase">TYPES <span class="text-[10px]">▼</span></button>
+                        <div class="absolute top-full left-0 pt-4 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                            <div class="bg-[#09090b] border border-zinc-800 rounded-xl shadow-2xl p-2 flex flex-col gap-1">
+                                <a href="home.html?type=tv" class="px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition text-xs font-bold uppercase tracking-wider">TV Series</a>
+                                <a href="home.html?type=movie" class="px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition text-xs font-bold uppercase tracking-wider">Movies</a>
+                                <a href="home.html?type=ova" class="px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition text-xs font-bold uppercase tracking-wider">OVAs</a>
+                                <a href="home.html?type=special" class="px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition text-xs font-bold uppercase tracking-wider">Specials</a>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="home.html?view=new" class="nav-link hover:text-white transition uppercase">New Releases</a>
+                    <a href="history.html" class="nav-link hover:text-white transition uppercase">History</a>
+                    <a href="home.html?view=ongoing" class="nav-link hover:text-white transition uppercase">Ongoing</a>
+                    <div class="relative group z-50 flex items-center">
+                        <button class="nav-link hover:text-white flex items-center gap-1.5 py-2 transition uppercase">A-Z List <span class="text-[10px]">▼</span></button>
+                        <div class="absolute top-full left-0 pt-4 w-80 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                            <div class="bg-[#09090b] border border-zinc-800 rounded-xl shadow-2xl p-4">
+                                <div id="alpha-index" class="flex flex-wrap gap-1.5"></div>
+                            </div>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+            <div class="flex w-full xl:w-auto items-center justify-end">
+                <div class="flex items-center bg-[#151518] border border-zinc-800 hover:border-zinc-700 transition rounded-full px-4 py-2 w-full sm:w-[400px] shadow-lg focus-within:ring-2 focus-within:ring-indigo-500/50">
+                    <button id="search-btn" class="text-white pr-3 hover:text-indigo-400 transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+                    <input type="text" id="search-input" placeholder="Search anime" class="flex-1 bg-transparent text-sm text-white focus:outline-none placeholder-zinc-500 w-full font-medium tracking-wide">
+                    <div class="relative group z-50 flex items-center pl-3 border-l border-zinc-700 ml-2 h-6">
+                        <button class="flex items-center gap-1.5 text-white font-bold text-sm tracking-wide hover:text-indigo-400 transition uppercase"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 4a1 1 0 011-1h16a1 1 0 01.74 1.673l-7.116 8.041A2 2 0 0013 14.228V20a1 1 0 01-1.447.894l-4-2A1 1 0 017 18v-3.772a2 2 0 00-.624-1.486L3.26 5.673A1 1 0 013 4z"/></svg>FILTER</button>
+                        <div class="absolute top-full right-0 pt-6 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                            <div class="bg-[#151518] border border-zinc-800 rounded-xl shadow-2xl p-4 flex flex-col gap-3 cursor-default" onclick="event.preventDefault();">
+                                <p class="text-xs font-black text-zinc-500 uppercase tracking-widest border-b border-zinc-800 pb-2">Advanced Filters</p>
+                                <select id="filter-type" class="w-full bg-zinc-900 border border-zinc-800 text-xs font-bold rounded-lg px-3 py-2.5 text-zinc-300 focus:outline-none cursor-pointer"><option value="">Any Type</option><option value="tv">TV</option><option value="movie">Movie</option><option value="ova">OVA</option></select>
+                                <select id="filter-genre" class="w-full bg-zinc-900 border border-zinc-800 text-xs font-bold rounded-lg px-3 py-2.5 text-zinc-300 focus:outline-none cursor-pointer"><option value="">Any Genre</option><option value="1">Action</option><option value="2">Adventure</option><option value="4">Comedy</option><option value="8">Drama</option><option value="10">Fantasy</option><option value="22">Romance</option><option value="24">Sci-Fi</option></select>
+                                <select id="filter-status" class="w-full bg-zinc-900 border border-zinc-800 text-xs font-bold rounded-lg px-3 py-2.5 text-zinc-300 focus:outline-none cursor-pointer"><option value="">Any Status</option><option value="airing">Airing</option><option value="complete">Complete</option><option value="upcoming">Upcoming</option></select>
+                                <select id="filter-sort" class="w-full bg-zinc-900 border border-zinc-800 text-xs font-bold rounded-lg px-3 py-2.5 text-zinc-300 focus:outline-none cursor-pointer"><option value="">Sort By</option><option value="score">Top Scored</option><option value="popularity">Most Popular</option></select>
+                                <button id="apply-filters-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 text-xs font-bold rounded-lg transition mt-2">Apply Filters</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </header>
 
-    <section class="relative w-full h-[50vh] flex items-center justify-start pb-12 border-b border-zinc-900" style="background-image: linear-gradient(to right, rgba(9,9,11,1) 10%, rgba(9,9,11,0.4) 50%, rgba(9,9,11,0.8) 100%), url('https://s4.anilist.co/file/anilistcdn/media/anime/banner/101922-YfZhKABsomRy.jpg'); background-size: cover; background-position: center;">
-        <div class="relative z-20 max-w-7xl mx-auto px-4 md:px-12 w-full mt-16">
+    <section class="relative w-full h-[40vh] flex items-center justify-start pb-12 border-b border-zinc-900" style="background-image: linear-gradient(to right, rgba(9,9,11,1) 10%, rgba(9,9,11,0.4) 50%, rgba(9,9,11,0.8) 100%), url('https://s4.anilist.co/file/anilistcdn/media/anime/banner/101922-YfZhKABsomRy.jpg'); background-size: cover; background-position: center;">
+        <div class="relative z-20 max-w-[1400px] mx-auto px-6 w-full mt-16">
             <h1 class="text-4xl md:text-5xl font-black text-white tracking-tight drop-shadow-2xl mb-3">Your Watch History</h1>
-            <p class="text-sm text-zinc-300 max-w-md leading-relaxed font-medium">Your viewing log is completely empty. Start exploring to build your history.</p>
+            <p id="history-subtitle" class="text-sm text-zinc-300 max-w-md leading-relaxed font-medium">Your viewing log is completely empty. Start exploring to build your history.</p>
         </div>
     </section>
 
-    <main class="max-w-7xl mx-auto px-4 md:px-12 py-12 w-full flex-1">
-        <h2 class="text-sm font-black tracking-widest text-white uppercase mb-6">History Log</h2>
+    <main class="max-w-[1400px] mx-auto px-6 py-12 w-full flex-1">
+        <div class="flex items-center justify-between mb-6 border-b border-zinc-900 pb-4">
+            <h2 class="text-xl font-black tracking-tight text-white uppercase">History Log</h2>
+            <button onclick="clearHistory()" class="text-xs text-red-500 hover:text-red-400 font-bold uppercase tracking-widest transition">Clear History ⊗</button>
+        </div>
         
-        <div id="history-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6">
+        <div id="history-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4 md:gap-6">
             </div>
     </main>
 
+    <script src="script.js"></script>
+
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            // Pull the saved history from the user's browser
+            renderHistory();
+        });
+
+        function renderHistory() {
             const history = JSON.parse(localStorage.getItem('animeHistory') || '[]');
             const container = document.getElementById('history-grid');
-            const subtitle = document.querySelector('section p');
+            const subtitle = document.getElementById('history-subtitle');
 
             if (history.length === 0) {
-                // The Empty State (Dashed Box)
                 container.innerHTML = `
-                    <div class="aspect-[2/3] border-2 border-dashed border-zinc-800 rounded-xl flex items-center justify-center bg-zinc-900/20">
-                        <p class="text-zinc-500 text-sm font-bold text-center px-4">No History<br>Found</p>
+                    <div class="col-span-full py-20 flex flex-col items-center justify-center gap-4">
+                        <svg class="w-16 h-16 text-zinc-800" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8zm1-13h-2v6l5.25 3.15.75-1.23-4-2.37V7z"/></svg>
+                        <p class="text-zinc-500 text-sm font-bold text-center">No watch history yet<br><span class="font-normal text-xs">Start watching anime to see your history here</span></p>
+                        <button onclick="window.location.href='home.html'" class="mt-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-lg font-bold text-sm transition">Browse Anime</button>
                     </div>
                 `;
+                subtitle.textContent = "Your viewing log is completely empty. Start exploring to build your history.";
             } else {
-                // Populate the grid and update the subtitle
                 subtitle.textContent = `You have ${history.length} titles in your viewing log. Pick up right where you left off.`;
                 container.innerHTML = '';
                 
                 history.forEach(anime => {
-                    const safeTitle = encodeURIComponent(anime.title);
-                    const safeImg = encodeURIComponent(anime.img);
-                    
                     container.innerHTML += `
                         <div class="relative group cursor-pointer aspect-[2/3] rounded-xl overflow-hidden border border-zinc-900 hover:border-indigo-500 transition duration-300 shadow-lg" onclick="window.location.href='info.html?id=${anime.mal_id}'">
                             <img src="${anime.img}" alt="${anime.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" loading="lazy">
@@ -65,7 +114,14 @@
                     `;
                 });
             }
-        });
+        }
+
+        function clearHistory() {
+            if(confirm("Are you sure you want to clear your entire watch history?")) {
+                localStorage.setItem('animeHistory', '[]');
+                renderHistory();
+            }
+        }
     </script>
 </body>
 </html>
