@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy — Anime.TV</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#09090b] text-zinc-100 font-sans min-h-screen selection:bg-indigo-500 selection:text-white flex flex-col overflow-x-hidden">
+
+    <header class="w-full bg-[#09090b]/90 backdrop-blur-md border-b border-zinc-900 sticky top-0 z-50 px-6 py-4 shrink-0">
+        <div class="max-w-[1400px] mx-auto flex flex-wrap xl:flex-nowrap items-center justify-between gap-6">
+            <div class="flex items-center gap-10">
+                <span class="text-3xl font-black tracking-tight text-white cursor-pointer" onclick="window.location.href='index.html'">Anime<span class="text-indigo-500">.TV</span></span>
+                <nav class="hidden lg:flex items-center gap-8 text-[13px] font-bold tracking-widest text-zinc-400">
+                    <a href="genres.html" class="nav-link hover:text-white transition uppercase">Genres</a>
+                    <div class="relative group z-50 flex items-center">
+                        <button class="nav-link hover:text-white flex items-center gap-1.5 py-2 transition uppercase">TYPES <span class="text-[10px]">▼</span></button>
+                        <div class="absolute top-full left-0 pt-4 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                            <div class="bg-[#09090b] border border-zinc-800 rounded-xl shadow-2xl p-2 flex flex-col gap-1">
+                                <a href="home.html?type=tv" class="px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition text-xs font-bold uppercase tracking-wider">TV Series</a>
+                                <a href="home.html?type=movie" class="px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition text-xs font-bold uppercase tracking-wider">Movies</a>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="home.html?view=new" class="nav-link hover:text-white transition uppercase">New Releases</a>
+                    <a href="history.html" class="nav-link hover:text-white transition uppercase">History</a>
+                    <a href="home.html?view=ongoing" class="nav-link hover:text-white transition uppercase">Ongoing</a>
+                </nav>
+            </div>
+            <div class="flex w-full xl:w-auto items-center justify-end">
+                <div class="flex items-center bg-[#151518] border border-zinc-800 hover:border-zinc-700 transition rounded-full px-4 py-2 w-full sm:w-[400px] shadow-lg focus-within:ring-2 focus-within:ring-indigo-500/50">
+                    <button class="text-white pr-3 hover:text-indigo-400 transition" onclick="window.location.href='home.html?q=' + document.getElementById('search-input').value">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </button>
+                    <input type="text" id="search-input" placeholder="Search anime" class="flex-1 bg-transparent text-sm text-white focus:outline-none placeholder-zinc-500 w-full font-medium tracking-wide">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-[1000px] mx-auto px-6 py-16 flex-1 w-full text-zinc-300">
+        <h1 class="text-4xl md:text-5xl font-black text-white tracking-tight mb-4">Privacy Policy</h1>
+        <p class="text-sm text-zinc-500 mb-10">Last updated: May 2026</p>
+
+        <div class="space-y-8 leading-relaxed">
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">1. Information We Collect</h2>
+                <p>We believe in keeping your browsing experience as private as possible. <strong>Anime.TV does not require you to create an account, and we do not store your personal information on our servers.</strong></p>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">2. Local Storage (Your History)</h2>
+                <p>To provide features like "Continue Watching" and your "Watch History", we utilize your browser's Local Storage. This means your viewing history is saved directly on your own device, not on our servers. Clearing your browser data will erase this history.</p>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">3. Third-Party Services</h2>
+                <p>We use third-party APIs (such as Jikan/MyAnimeList and TMDB) to fetch anime metadata, descriptions, and cover art. We also use third-party form providers (like Formspree) to handle our "Report a Bug" feature. When interacting with these features, basic network data (like IP addresses) may be visible to these third parties in accordance with their own privacy policies.</p>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-bold text-white mb-3">4. Changes to This Policy</h2>
+                <p>We may update our Privacy Policy from time to time. We advise you to review this page periodically for any changes. Changes to this Privacy Policy are effective when they are posted on this page.</p>
+            </section>
+        </div>
+    </main>
+
+    <footer class="w-full bg-[#050505] border-t border-zinc-900 pt-16 pb-8 mt-auto">
+        <div class="max-w-[1400px] mx-auto px-6 flex flex-col md:flex-row justify-between gap-8 md:gap-12">
+            <div class="max-w-xs space-y-4">
+                <span class="text-3xl font-black tracking-tight text-white cursor-pointer" onclick="window.location.href='index.html'">Anime<span class="text-indigo-500">.TV</span></span>
+                <p class="text-xs text-zinc-500 leading-relaxed">Anime.TV does not store any files on our server, we only link to the media which is hosted on 3rd party services.</p>
+            </div>
+            
+            <div class="flex flex-wrap gap-12 md:gap-24 text-sm">
+                <div class="space-y-3">
+                    <h4 class="font-black text-white tracking-widest uppercase text-xs mb-4">Navigation</h4>
+                    <a href="home.html" class="block text-zinc-400 hover:text-indigo-400 transition">Home</a>
+                    <a href="genres.html" class="block text-zinc-400 hover:text-indigo-400 transition">Genres</a>
+                    <a href="home.html?type=movie" class="block text-zinc-400 hover:text-indigo-400 transition">Movies</a>
+                </div>
+                <div class="space-y-3">
+                    <h4 class="font-black text-white tracking-widest uppercase text-xs mb-4">Support</h4>
+                    <button onclick="alert('Please submit requests from the Home page.')" class="block text-zinc-400 hover:text-[#d76145] transition text-left font-medium">Report Bug / Request</button>
+                    <a href="terms.html" class="block text-zinc-400 hover:text-indigo-400 transition">Terms of Service</a>
+                    <a href="privacy.html" class="block text-zinc-400 hover:text-indigo-400 transition">Privacy Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
