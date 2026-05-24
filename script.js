@@ -256,6 +256,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const genreIdQuery = urlParams.get('genre_id');
     const genreNameQuery = urlParams.get('genre_name');
     const letterQuery = urlParams.get('letter');
+    const typeQuery = urlParams.get('type'); // Add this line
 
     if (searchQuery) {
         executeAdvancedSearch(searchQuery);
