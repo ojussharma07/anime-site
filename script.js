@@ -275,9 +275,12 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (viewQuery === 'upcoming') {
         if (gridHeader) gridHeader.textContent = "Upcoming Releases";
         fetchAnimeData("https://api.jikan.moe/v4/seasons/upcoming?limit=24");
-    } else if (viewQuery === 'movies') {
-        if (gridHeader) gridHeader.textContent = "Anime Movies";
-        fetchAnimeData("https://api.jikan.moe/v4/anime?type=movie&order_by=popularity&sort=desc&limit=24");
+    } else if (typeQuery) {
+        // Handles TV, Movies, OVAs, and Specials dynamically
+        const typeLabels = { 'tv': 'TV Series', 'movie': 'Movies', 'ova': 'OVAs', 'special': 'Specials' };
+        if (gridHeader) gridHeader.textContent = `Top ${typeLabels[typeQuery] || 'Anime'}`;
+        fetchAnimeData(`https://api.jikan.moe/v4/anime?type=${typeQuery}&order_by=popularity&sort=desc&limit=24`);
+    } else if (viewQuery === 'new') {
     } else if (viewQuery === 'shuffle') {
         const randomPage = Math.floor(Math.random() * 10) + 1;
         if (gridHeader) gridHeader.textContent = "Random Selection";
