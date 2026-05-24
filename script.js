@@ -83,12 +83,17 @@ document.addEventListener("DOMContentLoaded", () => {
             spotlightData.forEach((item, index) => {
                 const isActive = index === currentSpotlightIndex;
                 const btn = document.createElement("div");
-                btn.className = `cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-500 w-16 h-24 relative flex items-center justify-center group ${isActive ? 'border-indigo-500 scale-110 shadow-[0_0_20px_rgba(99,102,241,0.5)] z-10' : 'border-zinc-800 opacity-50 hover:opacity-100'}`;
+                
+                let baseClasses = "cursor-pointer rounded-[14px] overflow-hidden relative flex items-center justify-center group transition-all duration-300 w-14 h-20 md:w-16 md:h-24 shrink-0";
+                if (isActive) btn.className = `${baseClasses} border-[3px] border-indigo-500 scale-110 shadow-[0_0_20px_rgba(99,102,241,0.5)] z-20`;
+                else btn.className = `${baseClasses} border-2 border-zinc-800 opacity-60 hover:opacity-100 hover:border-zinc-600 z-10`;
+
                 btn.innerHTML = `
-                    <div class="absolute inset-0 bg-black/50 group-hover:bg-black/20 transition-all z-10 ${isActive ? '!bg-black/20' : ''}"></div>
+                    <div class="absolute inset-0 bg-black/70 transition-all duration-300 z-10 ${isActive ? '!bg-black/0' : 'group-hover:bg-black/40'}"></div>
                     <img src="${item.images?.jpg?.image_url || ''}" class="absolute inset-0 w-full h-full object-cover z-0">
-                    <span class="relative z-20 font-black text-3xl text-white drop-shadow-[0_2px_5px_rgba(0,0,0,1)]">${index + 1}</span>
+                    <span class="relative z-20 font-black text-3xl md:text-4xl text-white drop-shadow-[0_4px_6px_rgba(0,0,0,0.9)] tracking-tighter">${index + 1}</span>
                 `;
+                
                 btn.onclick = () => {
                     currentSpotlightIndex = index; renderSpotlight();
                     clearInterval(spotlightInterval);
@@ -104,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // --- MAIN GRID RENDERER (GLASSMORPHISM UPGRADE) ---
+    // --- MAIN GRID RENDERER ---
     function renderGrid(animeList) {
         if (!animeGrid) return;
         animeGrid.innerHTML = "";
@@ -117,7 +122,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         uniqueAnimeList.forEach((anime) => {
             const wrapper = document.createElement("div");
-            // Premium glow and hover scale
             wrapper.className = "relative group cursor-pointer aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-indigo-500 transition-all duration-300 hover:shadow-[0_0_30px_rgba(99,102,241,0.2)] hover:-translate-y-1";
             const coverImg = anime.images?.jpg?.large_image_url || '';
             let shortDesc = anime.synopsis ? anime.synopsis.substring(0, 80) + "..." : "No synopsis.";
@@ -149,8 +153,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const cwSection = document.getElementById('continue-watching-section');
         const cwGrid = document.getElementById('cw-grid');
         if (!cwSection || !cwGrid) return;
-
-        // Hide it if we are searching or on a specific page (keeps the dashboard clean)
         if (window.location.search && !window.location.search.includes('view=home')) return;
 
         const history = JSON.parse(localStorage.getItem('animeHistory') || '[]');
@@ -158,11 +160,8 @@ document.addEventListener("DOMContentLoaded", () => {
             cwSection.classList.remove('hidden');
             cwGrid.innerHTML = '';
             
-            // Show up to 6 recent shows
             history.slice(0, 6).forEach(anime => {
-                // Fake a random progress bar percentage for premium visual effect (60% to 95%)
                 const progress = Math.floor(Math.random() * (95 - 60 + 1) + 60); 
-                
                 cwGrid.innerHTML += `
                     <div class="relative group cursor-pointer w-[240px] shrink-0 rounded-xl overflow-hidden border border-zinc-800 hover:border-indigo-500 transition-all duration-300 hover:shadow-[0_0_20px_rgba(99,102,241,0.2)]" onclick="window.location.href='info.html?id=${anime.mal_id}'">
                         <div class="aspect-video w-full relative">
@@ -198,8 +197,6 @@ document.addEventListener("DOMContentLoaded", () => {
             
             list.forEach((anime, index) => {
                 const row = document.createElement("div");
-                
-                // Spot #1: The Feature Card layout
                 if (index === 0) {
                     row.className = "relative rounded-xl overflow-hidden cursor-pointer group border border-zinc-800 hover:border-indigo-500 transition-all shadow-lg";
                     const bannerImg = anime.trailer?.images?.maximum_image_url || anime.images?.jpg?.large_image_url;
@@ -215,9 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             </div>
                         </div>
                     `;
-                } 
-                // Spots 2-5: Enhanced List View with Hover Actions
-                else {
+                } else {
                     row.className = "flex items-center gap-4 bg-[#151518] p-2.5 rounded-xl cursor-pointer transition-all border border-zinc-800 hover:border-zinc-600 hover:bg-zinc-800/80 group overflow-hidden relative";
                     row.innerHTML = `
                         <div class="w-12 h-16 rounded-md overflow-hidden shrink-0 shadow-md">
@@ -304,3 +299,49 @@ document.addEventListener("DOMContentLoaded", () => {
     setTimeout(() => buildMiniList("https://api.jikan.moe/v4/seasons/upcoming?limit=5", "col-upcoming"), 2000);
     setTimeout(() => buildMiniList("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=5", "col-popular"), 3000);
 });
+
+// --- MODAL ANIMATION & FORMSPREE SUBMISSION CONTROLS ---
+window.openBugModal = function() {
+    const modal = document.getElementById('bug-modal');
+    const content = document.getElementById('bug-modal-content');
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        content.classList.remove('scale-95');
+    }, 10);
+};
+
+window.closeBugModal = function() {
+    const modal = document.getElementById('bug-modal');
+    const content = document.getElementById('bug-modal-content');
+    modal.classList.add('opacity-0');
+    content.classList.add('scale-95');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 300);
+};
+
+// Seamless Formspree Submission (No Redirects)
+const bugForm = document.getElementById('bug-form');
+if (bugForm) {
+    bugForm.addEventListener('submit', function(e) {
+        e.preventDefault(); // Stop normal redirect
+        const formData = new FormData(bugForm);
+        
+        fetch(bugForm.action, {
+            method: 'POST',
+            body: formData,
+            headers: { 'Accept': 'application/json' }
+        }).then(response => {
+            if (response.ok) {
+                alert("Thank you! Your request has been sent successfully.");
+                bugForm.reset();
+                closeBugModal();
+            } else {
+                alert("Oops! There was a problem submitting your request.");
+            }
+        }).catch(error => {
+            alert("Oops! Network error. Please try again later.");
+        });
+    });
+}
