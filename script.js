@@ -1,12 +1,33 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // --- ACTIVE NAV TEXT ---
-    const navLinks = document.querySelectorAll('.nav-link');
-    navLinks.forEach(link => {
-        if (link.href === window.location.href || (window.location.href.includes('?') && link.href.includes(window.location.search))) {
-            link.classList.remove('text-zinc-400');
-            link.classList.add('text-indigo-400', 'font-black', 'drop-shadow-md');
-        }
-    });
+    // --- ACTIVE NAV TEXT (CRASH-PROOFED) ---
+    try {
+        const navLinks = document.querySelectorAll('.nav-link, nav button'); 
+        const currentUrl = window.location.href;
+
+        navLinks.forEach(link => {
+            // Reset state
+            link.classList.remove('text-indigo-400', 'font-black', 'drop-shadow-md');
+            
+            // If it's a standard link with an href
+            if (link.href) {
+                if (link.href === currentUrl || (currentUrl.includes('?') && link.href.includes(window.location.search))) {
+                    link.classList.remove('text-zinc-400');
+                    link.classList.add('text-indigo-400', 'font-black', 'drop-shadow-md');
+                }
+            } 
+            // If it's a Dropdown Button (TYPES or A-Z)
+            else if (link.textContent) {
+                const text = link.textContent.toUpperCase();
+                if ((currentUrl.includes('type=') && text.includes('TYPES')) || 
+                    (currentUrl.includes('letter=') && text.includes('A-Z'))) {
+                    link.classList.remove('text-zinc-400', 'hover:text-white');
+                    link.classList.add('text-indigo-400', 'font-black', 'drop-shadow-md');
+                }
+            }
+        });
+    } catch (error) {
+        console.warn("Navigation highlighting skipped to prevent crash:", error);
+    }
 
     // --- ELEMENT SELECTORS ---
     const animeGrid = document.getElementById("anime-grid");
@@ -15,6 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const heroDesc = document.getElementById("hero-desc");
     const heroBanner = document.getElementById("hero-banner");
     const heroPlayBtn = document.getElementById("hero-play-btn");
+    
     const searchInput = document.getElementById("search-input");
     const searchBtn = document.getElementById("search-btn");
     const alphaIndex = document.getElementById("alpha-index");
@@ -29,7 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
         
         heroTitle.textContent = anime.title;
         if (heroDesc) {
-            // Added robust fallback for unreleased anime
             let desc = anime.synopsis || anime.background || "No synopsis overview available yet.";
             desc = desc.replace(/\[Written by MAL Rewrite\]/gi, '').trim();
             if (desc.length > 200) desc = desc.substring(0, 200).trim() + "...";
@@ -220,7 +241,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if(!container) return;
         
         fetch(url).then(res => res.json()).then(data => {
-            // FIXED: Filter out duplicates from the mini-lists!
             const uniqueList = (data.data || []).filter((anime, index, self) =>
                 index === self.findIndex((t) => t.mal_id === anime.mal_id)
             );
@@ -253,10 +273,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
     const searchQuery = urlParams.get('q');
     const viewQuery = urlParams.get('view');
+    const typeQuery = urlParams.get('type');
     const genreIdQuery = urlParams.get('genre_id');
     const genreNameQuery = urlParams.get('genre_name');
     const letterQuery = urlParams.get('letter');
-    const typeQuery = urlParams.get('type'); // Add this line
 
     if (searchQuery) {
         executeAdvancedSearch(searchQuery);
@@ -266,6 +286,10 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (genreIdQuery && genreNameQuery) {
         if (gridHeader) gridHeader.textContent = `${genreNameQuery.replace(/_/g, ' ')} Anime`;
         fetchAnimeData(`https://api.jikan.moe/v4/anime?genres=${genreIdQuery}&order_by=popularity&sort=asc&limit=24`);
+    } else if (typeQuery) {
+        const typeLabels = { 'tv': 'TV Series', 'movie': 'Movies', 'ova': 'OVAs', 'special': 'Specials' };
+        if (gridHeader) gridHeader.textContent = `Top ${typeLabels[typeQuery] || 'Anime'}`;
+        fetchAnimeData(`https://api.jikan.moe/v4/anime?type=${typeQuery}&order_by=popularity&sort=desc&limit=24`);
     } else if (viewQuery === 'new') {
         if (gridHeader) gridHeader.textContent = "Newly Released";
         fetchAnimeData("https://api.jikan.moe/v4/seasons/now?limit=24");
@@ -275,12 +299,9 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (viewQuery === 'upcoming') {
         if (gridHeader) gridHeader.textContent = "Upcoming Releases";
         fetchAnimeData("https://api.jikan.moe/v4/seasons/upcoming?limit=24");
-    } else if (typeQuery) {
-        // Handles TV, Movies, OVAs, and Specials dynamically
-        const typeLabels = { 'tv': 'TV Series', 'movie': 'Movies', 'ova': 'OVAs', 'special': 'Specials' };
-        if (gridHeader) gridHeader.textContent = `Top ${typeLabels[typeQuery] || 'Anime'}`;
-        fetchAnimeData(`https://api.jikan.moe/v4/anime?type=${typeQuery}&order_by=popularity&sort=desc&limit=24`);
-    } else if (viewQuery === 'new') {
+    } else if (viewQuery === 'movies') {
+        if (gridHeader) gridHeader.textContent = "Anime Movies";
+        fetchAnimeData("https://api.jikan.moe/v4/anime?type=movie&order_by=popularity&sort=desc&limit=24");
     } else if (viewQuery === 'shuffle') {
         const randomPage = Math.floor(Math.random() * 10) + 1;
         if (gridHeader) gridHeader.textContent = "Random Selection";
