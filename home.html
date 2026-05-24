@@ -36,6 +36,7 @@
             
             <div class="flex w-full xl:w-auto items-center justify-end">
                 <div class="flex items-center bg-[#151518] border border-zinc-800 hover:border-zinc-700 transition rounded-full px-4 py-2 w-full sm:w-[400px] shadow-lg focus-within:ring-2 focus-within:ring-indigo-500/50">
+                    
                     <button id="search-btn" class="text-white pr-3 hover:text-indigo-400 transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </button>
@@ -47,6 +48,7 @@
                             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 4a1 1 0 011-1h16a1 1 0 01.74 1.673l-7.116 8.041A2 2 0 0013 14.228V20a1 1 0 01-1.447.894l-4-2A1 1 0 017 18v-3.772a2 2 0 00-.624-1.486L3.26 5.673A1 1 0 013 4z"/></svg>
                             FILTER
                         </button>
+
                         <div class="absolute top-full right-0 pt-6 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                             <div class="bg-[#151518] border border-zinc-800 rounded-xl shadow-2xl p-4 flex flex-col gap-3 cursor-default" onclick="event.preventDefault();">
                                 <p class="text-xs font-black text-zinc-500 uppercase tracking-widest border-b border-zinc-800 pb-2">Advanced Filters</p>
@@ -69,6 +71,7 @@
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </header>
@@ -85,57 +88,92 @@
     </section>
 
     <main class="max-w-[1400px] mx-auto px-6 py-8 flex-1 w-full">
-        <div class="mb-12">
+        
+        <div class="mb-4">
             <div class="flex items-center justify-between mb-6 border-b border-zinc-900 pb-4">
                 <h2 id="grid-header" class="text-xl md:text-2xl font-black tracking-tight text-white uppercase">Trending Now</h2>
             </div>
+            
             <div id="anime-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4 md:gap-6">
                 <p class="text-zinc-500 text-sm">Initializing catalog...</p>
             </div>
+            
+            <div id="pagination-container" class="flex flex-wrap items-center justify-center gap-2 mt-12 mb-6">
+                </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8 border-t border-zinc-900">
+            
             <div class="space-y-4">
                 <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
                     <h3 class="font-black tracking-wide text-white uppercase flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> New Releases
                     </h3>
+                    <a href="home.html?view=new" class="text-[10px] text-zinc-500 hover:text-white uppercase font-bold tracking-widest transition">View All ↗</a>
                 </div>
-                <div id="col-airing" class="flex flex-col gap-2"><p class="text-xs text-zinc-500 py-4 text-center">Fetching records...</p></div>
+                <div id="col-airing" class="flex flex-col gap-2">
+                    <p class="text-xs text-zinc-500 py-4 text-center">Fetching records...</p>
+                </div>
             </div>
+
             <div class="space-y-4">
                 <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
                     <h3 class="font-black tracking-wide text-white uppercase flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Upcoming
                     </h3>
+                    <a href="home.html?view=upcoming" class="text-[10px] text-zinc-500 hover:text-white uppercase font-bold tracking-widest transition">View All ↗</a>
                 </div>
-                <div id="col-upcoming" class="flex flex-col gap-2"><p class="text-xs text-zinc-500 py-4 text-center">Fetching records...</p></div>
+                <div id="col-upcoming" class="flex flex-col gap-2">
+                    <p class="text-xs text-zinc-500 py-4 text-center">Fetching records...</p>
+                </div>
             </div>
+
             <div class="space-y-4">
                 <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
                     <h3 class="font-black tracking-wide text-white uppercase flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-rose-500"></span> Most Popular
                     </h3>
+                    <a href="home.html" class="text-[10px] text-zinc-500 hover:text-white uppercase font-bold tracking-widest transition">View All ↗</a>
                 </div>
-                <div id="col-popular" class="flex flex-col gap-2"><p class="text-xs text-zinc-500 py-4 text-center">Fetching records...</p></div>
+                <div id="col-popular" class="flex flex-col gap-2">
+                    <p class="text-xs text-zinc-500 py-4 text-center">Fetching records...</p>
+                </div>
             </div>
+
         </div>
+
     </main>
 
     <footer class="w-full bg-[#050505] border-t border-zinc-900 pt-16 pb-8 mt-auto">
         <div class="max-w-[1400px] mx-auto px-6 flex flex-col md:flex-row justify-between gap-8 md:gap-12">
+            
             <div class="max-w-xs space-y-4">
                 <span class="text-3xl font-black tracking-tight text-white cursor-pointer" onclick="window.location.href='index.html'">Anime<span class="text-indigo-500">.TV</span></span>
                 <p class="text-xs text-zinc-500 leading-relaxed">
                     Anime.TV does not store any files on our server, we only linked to the media which is hosted on 3rd party services.
                 </p>
             </div>
+
             <div class="flex gap-12 md:gap-24 text-sm">
                 <div class="space-y-3">
                     <h4 class="font-black text-white tracking-widest uppercase text-xs mb-4">Navigation</h4>
                     <a href="home.html" class="block text-zinc-400 hover:text-indigo-400 transition">Home</a>
                     <a href="genres.html" class="block text-zinc-400 hover:text-indigo-400 transition">Genres</a>
+                    <a href="home.html?view=movies" class="block text-zinc-400 hover:text-indigo-400 transition">Movies</a>
                 </div>
+                <div class="space-y-3">
+                    <h4 class="font-black text-white tracking-widest uppercase text-xs mb-4">Quick Links</h4>
+                    <a href="home.html?view=new" class="block text-zinc-400 hover:text-indigo-400 transition">Ongoing</a>
+                    <a href="home.html?view=upcoming" class="block text-zinc-400 hover:text-indigo-400 transition">Upcoming</a>
+                    <a href="home.html?view=shuffle" class="block text-zinc-400 hover:text-indigo-400 transition">Random Anime</a>
+                </div>
+            </div>
+        </div>
+        <div class="max-w-[1400px] mx-auto px-6 mt-12 pt-8 border-t border-zinc-900/50 flex flex-col md:flex-row items-center justify-between text-[10px] text-zinc-600">
+            <p>&copy; 2024 Anime.TV. All rights reserved.</p>
+            <div class="flex gap-4 mt-4 md:mt-0">
+                <a href="#" class="hover:text-zinc-400">Terms of Service</a>
+                <a href="#" class="hover:text-zinc-400">Privacy Policy</a>
             </div>
         </div>
     </footer>
