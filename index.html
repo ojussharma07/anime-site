@@ -31,12 +31,14 @@
                     <a href="history.html" class="nav-link hover:text-white transition">HISTORY</a>
                     <a href="home.html?view=ongoing" class="nav-link hover:text-white transition">ONGOING</a>
                     
-                    <div class="relative group z-50">
+                    <div class="relative group z-50 flex items-center">
                         <button class="hover:text-white flex items-center gap-1.5 py-2 transition uppercase">
                             A-Z List <span class="text-[10px]">▼</span>
                         </button>
-                        <div class="absolute top-full left-0 mt-4 w-80 bg-[#09090b] border border-zinc-800 rounded-xl shadow-2xl p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                            <div id="alpha-index" class="flex flex-wrap gap-1.5"></div>
+                        <div class="absolute top-full left-0 pt-4 w-80 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                            <div class="bg-[#09090b] border border-zinc-800 rounded-xl shadow-2xl p-4">
+                                <div id="alpha-index" class="flex flex-wrap gap-1.5"></div>
+                            </div>
                         </div>
                     </div>
                 </nav>
