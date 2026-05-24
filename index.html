@@ -24,17 +24,22 @@
     </div>
 
     <header class="relative z-10 w-full pt-8 px-4 flex justify-center">
-        <nav class="hidden md:flex items-center gap-8 text-[13px] font-bold tracking-widest text-zinc-400">
-            <a href="home.html?view=shuffle" class="hover:text-white transition flex items-center gap-2" title="Random Anime">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-            </a>
-            
-            <a href="genres.html" class="hover:text-white transition">GENRES</a>
-            <a href="home.html?view=movies" class="hover:text-white transition">TYPES</a>
-            <a href="home.html?view=new" class="hover:text-white transition">NEW RELEASES</a>
-            <a href="history.html" class="text-white relative after:content-[''] after:absolute after:-bottom-2 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-indigo-500 after:rounded-full transition">HISTORY</a>
-            <a href="home.html?view=ongoing" class="hover:text-white transition">ONGOING</a>
-        </nav>
+        <<nav class="hidden lg:flex items-center gap-8 text-[13px] font-bold tracking-widest text-zinc-400">
+                    <a href="genres.html" class="nav-link hover:text-white transition">GENRES</a>
+                    <a href="home.html?view=movies" class="nav-link hover:text-white transition">TYPES</a>
+                    <a href="home.html?view=new" class="nav-link hover:text-white transition">NEW RELEASES</a>
+                    <a href="history.html" class="nav-link hover:text-white transition">HISTORY</a>
+                    <a href="home.html?view=ongoing" class="nav-link hover:text-white transition">ONGOING</a>
+                    
+                    <div class="relative group z-50">
+                        <button class="hover:text-white flex items-center gap-1.5 py-2 transition uppercase">
+                            A-Z List <span class="text-[10px]">▼</span>
+                        </button>
+                        <div class="absolute top-full left-0 mt-4 w-80 bg-[#09090b] border border-zinc-800 rounded-xl shadow-2xl p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                            <div id="alpha-index" class="flex flex-wrap gap-1.5"></div>
+                        </div>
+                    </div>
+                </nav>
     </header>
 
     <main class="relative z-10 flex flex-col items-center justify-center h-[85vh] px-4 text-center">
