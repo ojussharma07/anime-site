@@ -38,23 +38,13 @@
                     </div>
                 </nav>
             </div>
+            
             <div class="flex w-full xl:w-auto items-center justify-end">
                 <div class="flex items-center bg-[#151518] border border-zinc-800 hover:border-zinc-700 transition rounded-full px-4 py-2 w-full sm:w-[400px] shadow-lg focus-within:ring-2 focus-within:ring-indigo-500/50">
-                    <button id="search-btn" class="text-white pr-3 hover:text-indigo-400 transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
+                    <button id="search-btn" class="text-white pr-3 hover:text-indigo-400 transition" onclick="window.location.href='home.html?q=' + document.getElementById('search-input').value">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </button>
                     <input type="text" id="search-input" placeholder="Search anime" class="flex-1 bg-transparent text-sm text-white focus:outline-none placeholder-zinc-500 w-full font-medium tracking-wide">
-                    <div class="relative group z-50 flex items-center pl-3 border-l border-zinc-700 ml-2 h-6">
-                        <button class="flex items-center gap-1.5 text-white font-bold text-sm tracking-wide hover:text-indigo-400 transition uppercase"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 4a1 1 0 011-1h16a1 1 0 01.74 1.673l-7.116 8.041A2 2 0 0013 14.228V20a1 1 0 01-1.447.894l-4-2A1 1 0 017 18v-3.772a2 2 0 00-.624-1.486L3.26 5.673A1 1 0 013 4z"/></svg>FILTER</button>
-                        <div class="absolute top-full right-0 pt-6 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                            <div class="bg-[#151518] border border-zinc-800 rounded-xl shadow-2xl p-4 flex flex-col gap-3 cursor-default" onclick="event.preventDefault();">
-                                <p class="text-xs font-black text-zinc-500 uppercase tracking-widest border-b border-zinc-800 pb-2">Advanced Filters</p>
-                                <select id="filter-type" class="w-full bg-zinc-900 border border-zinc-800 text-xs font-bold rounded-lg px-3 py-2.5 text-zinc-300 focus:outline-none cursor-pointer"><option value="">Any Type</option><option value="tv">TV</option><option value="movie">Movie</option><option value="ova">OVA</option></select>
-                                <select id="filter-genre" class="w-full bg-zinc-900 border border-zinc-800 text-xs font-bold rounded-lg px-3 py-2.5 text-zinc-300 focus:outline-none cursor-pointer"><option value="">Any Genre</option><option value="1">Action</option><option value="2">Adventure</option><option value="4">Comedy</option><option value="8">Drama</option><option value="10">Fantasy</option><option value="22">Romance</option><option value="24">Sci-Fi</option></select>
-                                <select id="filter-status" class="w-full bg-zinc-900 border border-zinc-800 text-xs font-bold rounded-lg px-3 py-2.5 text-zinc-300 focus:outline-none cursor-pointer"><option value="">Any Status</option><option value="airing">Airing</option><option value="complete">Complete</option><option value="upcoming">Upcoming</option></select>
-                                <select id="filter-sort" class="w-full bg-zinc-900 border border-zinc-800 text-xs font-bold rounded-lg px-3 py-2.5 text-zinc-300 focus:outline-none cursor-pointer"><option value="">Sort By</option><option value="score">Top Scored</option><option value="popularity">Most Popular</option></select>
-                                <button id="apply-filters-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 text-xs font-bold rounded-lg transition mt-2">Apply Filters</button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -72,18 +62,61 @@
             <h2 class="text-xl font-black tracking-tight text-white uppercase">History Log</h2>
             <button onclick="clearHistory()" class="text-xs text-red-500 hover:text-red-400 font-bold uppercase tracking-widest transition">Clear History ⊗</button>
         </div>
-        
         <div id="history-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4 md:gap-6">
             </div>
     </main>
 
+    <footer class="w-full bg-[#050505] border-t border-zinc-900 pt-16 pb-8 mt-auto">
+        <div class="max-w-[1400px] mx-auto px-6 flex flex-col md:flex-row justify-between gap-8 md:gap-12">
+            <div class="max-w-xs space-y-4">
+                <span class="text-3xl font-black tracking-tight text-white cursor-pointer" onclick="window.location.href='index.html'">Anime<span class="text-indigo-500">.TV</span></span>
+                <p class="text-xs text-zinc-500 leading-relaxed">Anime.TV does not store any files on our server, we only link to the media which is hosted on 3rd party services.</p>
+            </div>
+            <div class="flex flex-wrap gap-12 md:gap-24 text-sm">
+                <div class="space-y-3">
+                    <h4 class="font-black text-white tracking-widest uppercase text-xs mb-4">Navigation</h4>
+                    <a href="home.html" class="block text-zinc-400 hover:text-indigo-400 transition">Home</a>
+                    <a href="genres.html" class="block text-zinc-400 hover:text-indigo-400 transition">Genres</a>
+                    <a href="home.html?type=movie" class="block text-zinc-400 hover:text-indigo-400 transition">Movies</a>
+                </div>
+                <div class="space-y-3">
+                    <h4 class="font-black text-white tracking-widest uppercase text-xs mb-4">Quick Links</h4>
+                    <a href="home.html?view=ongoing" class="block text-zinc-400 hover:text-indigo-400 transition">Ongoing</a>
+                    <a href="home.html?view=upcoming" class="block text-zinc-400 hover:text-indigo-400 transition">Upcoming</a>
+                    <a href="home.html?view=shuffle" class="block text-zinc-400 hover:text-indigo-400 transition">Random Anime</a>
+                </div>
+                <div class="space-y-3">
+                    <h4 class="font-black text-white tracking-widest uppercase text-xs mb-4">Support</h4>
+                    <button onclick="openBugModal()" class="block text-zinc-400 hover:text-[#d76145] transition text-left font-medium">Report Bug / Request</button>
+                    <a href="terms.html" class="block text-zinc-400 hover:text-indigo-400 transition">Terms of Service</a>
+                    <a href="privacy.html" class="block text-zinc-400 hover:text-indigo-400 transition">Privacy Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div id="bug-modal" class="fixed inset-0 z-[100] flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeBugModal()"></div>
+        <div class="relative bg-[#1c1d22] w-[90%] max-w-lg rounded-2xl p-6 md:p-8 shadow-2xl border border-zinc-800 transform scale-95 transition-transform duration-300" id="bug-modal-content">
+            <button onclick="closeBugModal()" class="absolute top-5 right-5 text-zinc-500 hover:text-white transition bg-zinc-800/50 hover:bg-zinc-700 p-2 rounded-full">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h2 class="text-2xl font-bold text-white mb-2 tracking-tight">Send Request</h2>
+            <p class="text-sm text-zinc-400 mb-6 leading-relaxed pr-6">If you can't find your favourite anime in our library, please submit a request. We will try to make it available as soon as possible.</p>
+            <form id="bug-form" action="https://formspree.io/f/mwvznpjo" method="POST" class="space-y-4">
+                <input type="text" name="anime_name" placeholder="Anime name or Bug title" required class="w-full bg-[#25262b] border border-transparent focus:border-zinc-600 text-zinc-200 text-sm rounded-xl px-4 py-3.5 outline-none placeholder-zinc-500 transition shadow-inner">
+                <input type="text" name="link" placeholder="Link to MAL/ AL/ anidb or any if possible" class="w-full bg-[#25262b] border border-transparent focus:border-zinc-600 text-zinc-200 text-sm rounded-xl px-4 py-3.5 outline-none placeholder-zinc-500 transition shadow-inner">
+                <textarea name="details" placeholder="More details about it if possible" rows="4" class="w-full bg-[#25262b] border border-transparent focus:border-zinc-600 text-zinc-200 text-sm rounded-xl px-4 py-3.5 outline-none placeholder-zinc-500 transition resize-none hide-scroll shadow-inner"></textarea>
+                <button type="submit" class="w-full bg-[#d76145] hover:bg-[#eb6a4b] text-white font-bold py-3.5 rounded-xl transition duration-300 mt-4 shadow-[0_4px_15px_rgba(215,97,69,0.3)]">
+                    Send Request
+                </button>
+            </form>
+        </div>
+    </div>
+
     <script src="script.js"></script>
-
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            renderHistory();
-        });
-
+        document.addEventListener("DOMContentLoaded", () => { renderHistory(); });
         function renderHistory() {
             const history = JSON.parse(localStorage.getItem('animeHistory') || '[]');
             const container = document.getElementById('history-grid');
@@ -101,7 +134,6 @@
             } else {
                 subtitle.textContent = `You have ${history.length} titles in your viewing log. Pick up right where you left off.`;
                 container.innerHTML = '';
-                
                 history.forEach(anime => {
                     container.innerHTML += `
                         <div class="relative group cursor-pointer aspect-[2/3] rounded-xl overflow-hidden border border-zinc-900 hover:border-indigo-500 transition duration-300 shadow-lg" onclick="window.location.href='info.html?id=${anime.mal_id}'">
@@ -115,7 +147,6 @@
                 });
             }
         }
-
         function clearHistory() {
             if(confirm("Are you sure you want to clear your entire watch history?")) {
                 localStorage.setItem('animeHistory', '[]');
