@@ -86,15 +86,29 @@
         </div>
     </header>
 
-    <section class="relative w-full h-[50vh] md:h-[60vh] bg-zinc-900 border-b border-zinc-900 overflow-hidden shrink-0" id="hero-banner" style="background-size: cover; background-position: center;">
-        <div class="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/70 to-transparent"></div>
-        <div class="absolute bottom-0 left-0 w-full p-6 md:p-12 max-w-[1400px] mx-auto flex flex-col items-start gap-4 z-10">
-            <h1 id="hero-title" class="text-4xl md:text-5xl font-black text-white tracking-tight drop-shadow-2xl max-w-3xl line-clamp-1">Loading Spotlight...</h1>
-            <p id="hero-desc" class="text-sm text-zinc-300 max-w-2xl line-clamp-2 leading-relaxed hidden sm:block">Syncing latest database records...</p>
-            <button id="hero-play-btn" class="mt-2 bg-white text-black px-6 py-2.5 rounded-full font-bold text-sm hover:scale-105 transition duration-300 flex items-center gap-2 shadow-lg hidden">
-                ▶ Watch Now
-            </button>
+    <section class="relative w-full h-[60vh] md:h-[70vh] bg-zinc-900 border-b border-zinc-900 overflow-hidden shrink-0 flex items-center transition-all duration-700" id="hero-banner" style="background-size: cover; background-position: center;">
+        <div class="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/80 to-transparent z-0"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-[#09090b] via-[#09090b]/60 to-transparent z-0"></div>
+        
+        <div class="relative z-10 w-full max-w-[1400px] mx-auto px-6 flex flex-col md:flex-row justify-between items-end md:items-center gap-8 h-full pb-16 md:pb-0 md:pt-12">
+            
+            <div class="flex-1 max-w-3xl w-full">
+                <div class="text-indigo-400 font-black tracking-widest uppercase text-xs mb-3 flex items-center gap-2" id="spotlight-rank">
+                    <span class="text-2xl text-white">#1</span> SPOTLIGHT
+                </div>
+                <h1 id="hero-title" class="text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight drop-shadow-2xl line-clamp-2 mb-4">Loading Spotlight...</h1>
+                <p id="hero-desc" class="text-sm text-zinc-300 max-w-2xl line-clamp-3 leading-relaxed hidden sm:block mb-6">Syncing latest database records...</p>
+                <button id="hero-play-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3.5 rounded-full font-black text-sm hover:scale-105 transition duration-300 flex items-center gap-2 shadow-[0_0_20px_rgba(99,102,241,0.4)] hidden uppercase tracking-wide">
+                    ▶ Watch Now
+                </button>
+            </div>
+
+            <div class="hidden lg:flex gap-4 items-center justify-end z-20" id="spotlight-controls">
+                </div>
         </div>
+        
+        <div class="absolute bottom-6 right-6 lg:hidden flex gap-2 z-20" id="spotlight-controls-mobile">
+            </div>
     </section>
 
     <main class="max-w-[1400px] mx-auto px-6 py-8 flex-1 w-full">
