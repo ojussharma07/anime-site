@@ -59,4 +59,145 @@
                             <div class="bg-[#151518] border border-zinc-800 rounded-xl shadow-2xl p-4 flex flex-col gap-3 cursor-default" onclick="event.preventDefault();">
                                 <p class="text-xs font-black text-zinc-500 uppercase tracking-widest border-b border-zinc-800 pb-2">Advanced Filters</p>
                                 <select id="filter-type" class="w-full bg-zinc-900 border border-zinc-800 text-xs font-bold rounded-lg px-3 py-2.5 text-zinc-300 focus:outline-none cursor-pointer">
-                                    <option value="">Any Type</option><option value="tv">TV</option><option value="
+                                    <option value="">Any Type</option><option value="tv">TV</option><option value="movie">Movie</option><option value="ova">OVA</option>
+                                </select>
+                                <select id="filter-genre" class="w-full bg-zinc-900 border border-zinc-800 text-xs font-bold rounded-lg px-3 py-2.5 text-zinc-300 focus:outline-none cursor-pointer">
+                                    <option value="">Any Genre</option><option value="1">Action</option><option value="2">Adventure</option><option value="4">Comedy</option><option value="8">Drama</option><option value="10">Fantasy</option><option value="22">Romance</option><option value="24">Sci-Fi</option>
+                                </select>
+                                <select id="filter-status" class="w-full bg-zinc-900 border border-zinc-800 text-xs font-bold rounded-lg px-3 py-2.5 text-zinc-300 focus:outline-none cursor-pointer">
+                                    <option value="">Any Status</option><option value="airing">Airing</option><option value="complete">Complete</option><option value="upcoming">Upcoming</option>
+                                </select>
+                                <select id="filter-sort" class="w-full bg-zinc-900 border border-zinc-800 text-xs font-bold rounded-lg px-3 py-2.5 text-zinc-300 focus:outline-none cursor-pointer">
+                                    <option value="">Sort By</option><option value="score">Top Scored</option><option value="popularity">Most Popular</option>
+                                </select>
+                                <button id="apply-filters-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 text-xs font-bold rounded-lg transition mt-2">
+                                    Apply Filters
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="relative w-full h-[75vh] md:h-[85vh] lg:h-[90vh] bg-zinc-900 border-b border-zinc-900 overflow-hidden shrink-0 flex flex-col justify-end transition-all duration-700" id="hero-banner" style="background-size: cover; background-position: center;">
+        <div class="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/70 to-transparent z-0"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-[#09090b] via-[#09090b]/60 to-transparent z-0"></div>
+        
+        <div class="relative z-10 w-full max-w-[1400px] mx-auto px-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-8 pb-12 md:pb-24 pt-32">
+            <div class="flex-1 max-w-3xl w-full">
+                <div class="text-indigo-400 font-black tracking-widest uppercase text-xs mb-3 flex items-center gap-2" id="spotlight-rank">
+                    <span class="text-3xl text-white">#1</span> <span class="pt-1">SPOTLIGHT</span>
+                </div>
+                <h1 id="hero-title" class="text-5xl md:text-6xl lg:text-7xl font-black text-white tracking-tight drop-shadow-2xl line-clamp-2 mb-4">Loading...</h1>
+                <p id="hero-desc" class="text-base text-zinc-300 max-w-2xl line-clamp-3 leading-relaxed hidden md:block mb-8 drop-shadow-md">Syncing premium database records...</p>
+                <div class="flex items-center gap-4">
+                    <button id="hero-play-btn" class="bg-white text-black px-8 py-3.5 rounded-full font-black text-sm hover:scale-105 transition duration-300 flex items-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.3)] hidden uppercase tracking-wide">
+                        ▶ Watch Now
+                    </button>
+                    <button class="bg-zinc-800/80 hover:bg-zinc-700 backdrop-blur-md text-white border border-zinc-700 px-6 py-3.5 rounded-full font-bold text-sm transition duration-300 hidden md:block">
+                        + Add to List
+                    </button>
+                </div>
+            </div>
+            <div class="hidden lg:flex gap-4 items-center justify-end z-20 mb-2" id="spotlight-controls"></div>
+        </div>
+        <div class="absolute bottom-6 right-6 lg:hidden flex gap-2 z-20" id="spotlight-controls-mobile"></div>
+    </section>
+
+    <main class="max-w-[1400px] mx-auto px-6 py-8 flex-1 w-full">
+        
+        <div id="continue-watching-section" class="mb-12 hidden">
+            <h2 class="text-lg font-black tracking-widest text-zinc-400 uppercase mb-4">Continue Watching</h2>
+            <div id="cw-grid" class="flex overflow-x-auto gap-4 pb-4 hide-scroll"></div>
+        </div>
+
+        <div class="mb-4">
+            <div class="flex items-center justify-between mb-6 border-b border-zinc-900 pb-4">
+                <h2 id="grid-header" class="text-xl md:text-2xl font-black tracking-tight text-white uppercase">Trending Now</h2>
+            </div>
+            <div id="anime-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4 md:gap-6">
+                <p class="text-zinc-500 text-sm">Initializing catalog...</p>
+            </div>
+            <div id="pagination-container" class="flex flex-wrap items-center justify-center gap-2 mt-12 mb-6"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 pt-8 border-t border-zinc-900">
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+                    <h3 class="font-black tracking-wide text-white uppercase flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> New Releases</h3>
+                    <a href="home.html?view=new" class="text-[10px] text-zinc-500 hover:text-white uppercase font-bold tracking-widest transition">View All ↗</a>
+                </div>
+                <div id="col-airing" class="flex flex-col gap-3"></div>
+            </div>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+                    <h3 class="font-black tracking-wide text-white uppercase flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-indigo-500"></span> Upcoming</h3>
+                    <a href="home.html?view=upcoming" class="text-[10px] text-zinc-500 hover:text-white uppercase font-bold tracking-widest transition">View All ↗</a>
+                </div>
+                <div id="col-upcoming" class="flex flex-col gap-3"></div>
+            </div>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+                    <h3 class="font-black tracking-wide text-white uppercase flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-rose-500"></span> Most Popular</h3>
+                    <a href="home.html" class="text-[10px] text-zinc-500 hover:text-white uppercase font-bold tracking-widest transition">View All ↗</a>
+                </div>
+                <div id="col-popular" class="flex flex-col gap-3"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="w-full bg-[#050505] border-t border-zinc-900 pt-16 pb-8 mt-auto">
+        <div class="max-w-[1400px] mx-auto px-6 flex flex-col md:flex-row justify-between gap-8 md:gap-12">
+            <div class="max-w-xs space-y-4">
+                <span class="text-3xl font-black tracking-tight text-white cursor-pointer" onclick="window.location.href='index.html'">Anime<span class="text-indigo-500">.TV</span></span>
+                <p class="text-xs text-zinc-500 leading-relaxed">Anime.TV does not store any files on our server, we only link to the media which is hosted on 3rd party services.</p>
+            </div>
+            <div class="flex flex-wrap gap-12 md:gap-24 text-sm">
+                <div class="space-y-3">
+                    <h4 class="font-black text-white tracking-widest uppercase text-xs mb-4">Navigation</h4>
+                    <a href="home.html" class="block text-zinc-400 hover:text-indigo-400 transition">Home</a>
+                    <a href="genres.html" class="block text-zinc-400 hover:text-indigo-400 transition">Genres</a>
+                    <a href="home.html?type=movie" class="block text-zinc-400 hover:text-indigo-400 transition">Movies</a>
+                </div>
+                <div class="space-y-3">
+                    <h4 class="font-black text-white tracking-widest uppercase text-xs mb-4">Quick Links</h4>
+                    <a href="home.html?view=ongoing" class="block text-zinc-400 hover:text-indigo-400 transition">Ongoing</a>
+                    <a href="home.html?view=upcoming" class="block text-zinc-400 hover:text-indigo-400 transition">Upcoming</a>
+                    <a href="home.html?view=shuffle" class="block text-zinc-400 hover:text-indigo-400 transition">Random Anime</a>
+                </div>
+                <div class="space-y-3">
+                    <h4 class="font-black text-white tracking-widest uppercase text-xs mb-4">Support</h4>
+                    <button onclick="openBugModal()" class="block text-zinc-400 hover:text-[#d76145] transition text-left font-medium">Report Bug / Request</button>
+                    <a href="terms.html" class="block text-zinc-400 hover:text-indigo-400 transition">Terms of Service</a>
+                    <a href="privacy.html" class="block text-zinc-400 hover:text-indigo-400 transition">Privacy Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div id="bug-modal" class="fixed inset-0 z-[100] flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeBugModal()"></div>
+        <div class="relative bg-[#1c1d22] w-[90%] max-w-lg rounded-2xl p-6 md:p-8 shadow-2xl border border-zinc-800 transform scale-95 transition-transform duration-300" id="bug-modal-content">
+            <button onclick="closeBugModal()" class="absolute top-5 right-5 text-zinc-500 hover:text-white transition bg-zinc-800/50 hover:bg-zinc-700 p-2 rounded-full">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h2 class="text-2xl font-bold text-white mb-2 tracking-tight">Send Request</h2>
+            <p class="text-sm text-zinc-400 mb-6 leading-relaxed pr-6">If you can't find your favourite anime in our library, please submit a request. We will try to make it available as soon as possible.</p>
+            
+            <form id="bug-form" action="https://formspree.io/f/mwvznpjo" method="POST" class="space-y-4">
+                <input type="text" name="anime_name" placeholder="Anime name or Bug title" required class="w-full bg-[#25262b] border border-transparent focus:border-zinc-600 text-zinc-200 text-sm rounded-xl px-4 py-3.5 outline-none placeholder-zinc-500 transition shadow-inner">
+                <input type="text" name="link" placeholder="Link to MAL/ AL/ anidb or any if possible" class="w-full bg-[#25262b] border border-transparent focus:border-zinc-600 text-zinc-200 text-sm rounded-xl px-4 py-3.5 outline-none placeholder-zinc-500 transition shadow-inner">
+                <textarea name="details" placeholder="More details about it if possible" rows="4" class="w-full bg-[#25262b] border border-transparent focus:border-zinc-600 text-zinc-200 text-sm rounded-xl px-4 py-3.5 outline-none placeholder-zinc-500 transition resize-none hide-scroll shadow-inner"></textarea>
+                
+                <button type="submit" class="w-full bg-[#d76145] hover:bg-[#eb6a4b] text-white font-bold py-3.5 rounded-xl transition duration-300 mt-4 shadow-[0_4px_15px_rgba(215,97,69,0.3)]">
+                    Send Request
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
