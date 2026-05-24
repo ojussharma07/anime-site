@@ -1,4 +1,17 @@
 document.addEventListener("DOMContentLoaded", () => {
+     // --- DYNAMIC ACTIVE NAV TEXT ---
+    // This checks your current URL and colors the correct navigation link
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+        // link.href gets the full absolute URL, which we compare to the browser's current URL
+        if (link.href === window.location.href) {
+            // Remove the dull gray
+            link.classList.remove('text-zinc-400');
+            // Change the text to bright indigo and make it slightly thicker
+            link.classList.add('text-indigo-400', 'font-black', 'drop-shadow-md');
+        }
+    });
+    
     const animeGrid = document.getElementById("anime-grid");
     const gridHeader = document.getElementById("grid-header");
     const heroTitle = document.getElementById("hero-title");
