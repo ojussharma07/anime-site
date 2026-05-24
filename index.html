@@ -15,7 +15,7 @@
         }
     </style>
 </head>
-<body class="bg-[#0b0b0e] text-white font-sans min-h-screen overflow-hidden selection:bg-indigo-500 selection:text-white bg-start">
+<body class="bg-[#0b0b0e] text-white font-sans min-h-screen overflow-x-hidden selection:bg-indigo-500 selection:text-white bg-start">
 
     <div class="fixed inset-0 z-0 pointer-events-none">
         <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-[#0b0b0e]/30 to-[#0b0b0e]/90 opacity-90"></div>
@@ -27,7 +27,6 @@
             <a href="home.html?view=shuffle" class="hover:text-white transition flex items-center gap-2" title="Random Anime">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
             </a>
-            
             <a href="genres.html" class="nav-link hover:text-white transition">GENRES</a>
             <a href="home.html?view=movies" class="nav-link hover:text-white transition">TYPES</a>
             <a href="home.html?view=new" class="nav-link hover:text-white transition">NEW RELEASES</a>
@@ -47,19 +46,51 @@
         </nav>
     </header>
 
-    <main class="relative z-10 flex flex-col items-center justify-center h-[85vh] px-4 text-center">
+    <main class="relative z-10 flex flex-col items-center justify-center min-h-[80vh] px-4 py-12 text-center">
         
         <h1 class="text-6xl md:text-7xl font-black tracking-tight mb-8 drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)] hover:scale-105 transition duration-500 cursor-pointer" onclick="window.location.reload();">
             Anime<span class="text-indigo-500">.TV</span>
         </h1>
 
-        <form action="home.html" method="GET" class="flex items-center bg-[#151518] border border-zinc-800 hover:border-zinc-700 transition rounded-full px-5 py-3 w-full max-w-2xl mb-6 shadow-2xl focus-within:ring-2 focus-within:ring-indigo-500/50">
+        <form action="home.html" method="GET" class="flex items-center bg-[#151518] border border-zinc-800 hover:border-zinc-700 transition rounded-full px-5 py-3 w-full max-w-2xl mb-8 shadow-2xl focus-within:ring-2 focus-within:ring-indigo-500/50">
             <button type="submit" class="text-white pr-4 hover:text-indigo-400 transition">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </button>
-            
             <input type="text" name="q" placeholder="Search anime" required class="flex-1 bg-transparent text-lg text-white font-medium focus:outline-none placeholder-zinc-500 w-full tracking-wide">
             
             <div class="relative group z-50 flex items-center pl-4 border-l border-zinc-700 ml-2 h-8">
                 <button type="button" class="flex items-center gap-2 text-white font-bold text-sm tracking-wide hover:text-indigo-400 transition uppercase">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M3 4a1 1 0 011-1h16a1 1 0 01.74 1.673l-7.116 8.041A2 2 0 0013 14.228V20a1 1 0 01-1.447.894l-4-2A
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M3 4a1 1 0 011-1h16a1 1 0 01.74 1.673l-7.116 8.041A2 2 0 0013 14.228V20a1 1 0 01-1.447.894l-4-2A1 1 0 017 18v-3.772a2 2 0 00-.624-1.486L3.26 5.673A1 1 0 013 4z"/></svg>
+                    FILTER
+                </button>
+                <div class="absolute top-full right-0 pt-6 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 text-left">
+                    <div class="bg-[#151518] border border-zinc-800 rounded-xl shadow-2xl p-4 flex flex-col gap-3 cursor-default" onclick="event.stopPropagation();">
+                        <p class="text-xs font-black text-zinc-500 uppercase tracking-widest border-b border-zinc-800 pb-2">Advanced Filters</p>
+                        <select name="type" class="w-full bg-zinc-900 border border-zinc-800 text-xs font-bold rounded-lg px-3 py-2.5 text-zinc-300 focus:outline-none cursor-pointer">
+                            <option value="">Any Type</option><option value="tv">TV</option><option value="movie">Movie</option><option value="ova">OVA</option>
+                        </select>
+                        <select name="genres" class="w-full bg-zinc-900 border border-zinc-800 text-xs font-bold rounded-lg px-3 py-2.5 text-zinc-300 focus:outline-none cursor-pointer">
+                            <option value="">Any Genre</option><option value="1">Action</option><option value="2">Adventure</option><option value="4">Comedy</option><option value="8">Drama</option><option value="10">Fantasy</option><option value="22">Romance</option><option value="24">Sci-Fi</option>
+                        </select>
+                        <select name="status" class="w-full bg-zinc-900 border border-zinc-800 text-xs font-bold rounded-lg px-3 py-2.5 text-zinc-300 focus:outline-none cursor-pointer">
+                            <option value="">Any Status</option><option value="airing">Airing</option><option value="complete">Complete</option><option value="upcoming">Upcoming</option>
+                        </select>
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 text-xs font-bold rounded-lg transition mt-2 text-center">
+                            Search with Filters
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <p class="text-zinc-200 font-medium text-sm md:text-base max-w-xl leading-relaxed mb-10 drop-shadow-[0_2px_5px_rgba(0,0,0,0.7)]">
+            Stream the latest episodes of One Piece, Jujutsu Kaisen, Attack on Titan, Bleach, Demon Slayer, and thousands more.
+        </p>
+
+        <a href="home.html" class="bg-[#F05A3F] hover:bg-[#ff694c] text-white font-black tracking-wide uppercase text-sm px-14 py-4 rounded-lg shadow-[0_0_20px_rgba(240,90,63,0.4)] hover:shadow-[0_0_30px_rgba(240,90,63,0.6)] hover:-translate-y-1 transition duration-300 z-20">
+            Watch Now
+        </a>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>
