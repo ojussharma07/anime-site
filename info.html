@@ -82,46 +82,41 @@
                 const anime = data.data;
                 const title = anime.title;
                 const coverImg = anime.images?.jpg?.large_image_url || '';
-
-                // --- SAVE TO LOCAL HISTORY ---
-                let history = JSON.parse(localStorage.getItem('animeHistory') || '[]');
-                
-                // Remove the anime if it's already in history (to move it to the front)
-                history = history.filter(item => item.mal_id !== anime.mal_id);
-                
-                // Add to the very front of the array
-                history.unshift({
-                    mal_id: anime.mal_id,
-                    title: title,
-                    img: coverImg
-                });
-                
-                // Cap the history list at 30 items so it doesn't break the browser
-                if (history.length > 30) history.pop();
-                
-                // Save it back
-                localStorage.setItem('animeHistory', JSON.stringify(history));
-                // -----------------------------
                 
                 document.title = `${title} — Anime.TV`;
                 document.getElementById('anime-title').textContent = title;
                 
-                // Clean synopsis
-                let desc = anime.synopsis || "No synopsis available.";
+                // NEW: Robust Synopsis Fallback for unreleased shows!
+                let desc = anime.synopsis || anime.background || "No synopsis information has been added to the database yet.";
                 desc = desc.replace(/\[Written by MAL Rewrite\]/gi, '').trim();
                 document.getElementById('anime-synopsis').textContent = desc;
                 
                 document.getElementById('poster-img').src = coverImg;
                 document.getElementById('poster-img').classList.remove('opacity-0');
 
+                // NEW: Extract Genres directly from the API
+                let genresList = "Unknown Genre";
+                if (anime.genres && anime.genres.length > 0) {
+                    genresList = anime.genres.map(g => g.name).join(', ');
+                }
+
+                // Add the sleek Indigo genre badge at the end of the metadata
                 const badgesHtml = `
                     <span class="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2 py-0.5 rounded flex items-center gap-1">★ ${anime.score || 'N/A'}</span>
                     <span class="bg-zinc-800 border border-zinc-700 px-2 py-0.5 rounded">${anime.rating ? anime.rating.split(' ')[0] : 'NR'}</span>
                     <span class="bg-zinc-800 border border-zinc-700 px-2 py-0.5 rounded">${anime.type}</span>
                     <span class="bg-zinc-800 border border-zinc-700 px-2 py-0.5 rounded">${anime.year || 'TBA'}</span>
                     <span class="bg-zinc-800 border border-zinc-700 px-2 py-0.5 rounded">${anime.status}</span>
+                    <span class="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded">${genresList}</span>
                 `;
                 document.getElementById('meta-badges').innerHTML = badgesHtml;
+
+                // --- SAVE TO LOCAL HISTORY ---
+                let history = JSON.parse(localStorage.getItem('animeHistory') || '[]');
+                history = history.filter(item => item.mal_id !== anime.mal_id);
+                history.unshift({ mal_id: anime.mal_id, title: title, img: coverImg });
+                if (history.length > 30) history.pop();
+                localStorage.setItem('animeHistory', JSON.stringify(history));
 
                 // 1. Load Japanese Trailer as Fallback
                 if (anime.trailer && anime.trailer.embed_url) {
@@ -146,22 +141,17 @@
                         if (tmdb.results && tmdb.results.length > 0) {
                             const tmdbId = tmdb.results[0].id;
 
-                            // Apply Backdrop
                             if (tmdb.results[0].backdrop_path) {
                                 backdrop.style.backgroundImage = `url('https://image.tmdb.org/t/p/original${tmdb.results[0].backdrop_path}')`;
                             } else if (anime.trailer?.images?.maximum_image_url) {
                                 backdrop.style.backgroundImage = `url('${anime.trailer.images.maximum_image_url}')`;
                             }
 
-                            // 3. Search for English Trailer
                             fetch(`https://api.themoviedb.org/3/${tmdbType}/${tmdbId}/videos?api_key=${TMDB_API_KEY}&language=en-US`)
                                 .then(vRes => vRes.json())
                                 .then(videoData => {
                                     if (videoData.results && videoData.results.length > 0) {
-                                        // Look for the official English trailer
                                         let engTrailer = videoData.results.find(v => v.type === 'Trailer' && v.site === 'YouTube');
-                                        
-                                        // Overwrite the Japanese fallback with the English version
                                         if (engTrailer) {
                                             document.getElementById('trailer-container').innerHTML = `
                                                 <iframe src="https://www.youtube.com/embed/${engTrailer.key}?autoplay=0&mute=0" class="w-full h-full" frameborder="0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
@@ -188,7 +178,6 @@
                 charList.innerHTML = '';
                 
                 const mainCast = data.data.slice(0, 8);
-                
                 if(mainCast.length === 0) {
                     charList.innerHTML = `<p class="text-zinc-500 text-sm">Cast records classified.</p>`;
                     return;
