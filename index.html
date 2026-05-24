@@ -27,28 +27,26 @@
             <a href="home.html?view=shuffle" class="hover:text-white transition flex items-center gap-2" title="Random Anime">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
             </a>
-            <a href="genres.html" class="nav-link hover:text-white transition">GENRES</a>
-            <div class="relative group z-50 flex items-center">
-                        <button class="nav-link hover:text-white flex items-center gap-1.5 py-2 transition uppercase">
-                            TYPES <span class="text-[10px]">▼</span>
-                        </button>
-                        <div class="absolute top-full left-0 pt-4 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                            <div class="bg-[#09090b] border border-zinc-800 rounded-xl shadow-2xl p-2 flex flex-col gap-1">
-                                <a href="home.html?type=tv" class="px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition text-xs font-bold uppercase tracking-wider">TV Series</a>
-                                <a href="home.html?type=movie" class="px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition text-xs font-bold uppercase tracking-wider">Movies</a>
-                                <a href="home.html?type=ova" class="px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition text-xs font-bold uppercase tracking-wider">OVAs</a>
-                                <a href="home.html?type=special" class="px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition text-xs font-bold uppercase tracking-wider">Specials</a>
-                            </div>
-                        </div>
-                    </div>
-            <a href="home.html?view=new" class="nav-link hover:text-white transition">NEW RELEASES</a>
-            <a href="history.html" class="nav-link hover:text-white transition">HISTORY</a>
-            <a href="home.html?view=ongoing" class="nav-link hover:text-white transition">ONGOING</a>
+            <a href="genres.html" class="nav-link hover:text-white transition uppercase">GENRES</a>
             
             <div class="relative group z-50 flex items-center">
-                <button class="hover:text-white flex items-center gap-1.5 py-2 transition uppercase">
-                    A-Z List <span class="text-[10px]">▼</span>
-                </button>
+                <button class="nav-link hover:text-white flex items-center gap-1.5 py-2 transition uppercase">TYPES <span class="text-[10px]">▼</span></button>
+                <div class="absolute top-full left-0 pt-4 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 text-left">
+                    <div class="bg-[#09090b] border border-zinc-800 rounded-xl shadow-2xl p-2 flex flex-col gap-1">
+                        <a href="home.html?type=tv" class="px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition text-xs font-bold uppercase tracking-wider">TV Series</a>
+                        <a href="home.html?type=movie" class="px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition text-xs font-bold uppercase tracking-wider">Movies</a>
+                        <a href="home.html?type=ova" class="px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition text-xs font-bold uppercase tracking-wider">OVAs</a>
+                        <a href="home.html?type=special" class="px-4 py-2.5 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition text-xs font-bold uppercase tracking-wider">Specials</a>
+                    </div>
+                </div>
+            </div>
+
+            <a href="home.html?view=new" class="nav-link hover:text-white transition uppercase">NEW RELEASES</a>
+            <a href="history.html" class="nav-link hover:text-white transition uppercase">HISTORY</a>
+            <a href="home.html?view=ongoing" class="nav-link hover:text-white transition uppercase">ONGOING</a>
+            
+            <div class="relative group z-50 flex items-center">
+                <button class="nav-link hover:text-white flex items-center gap-1.5 py-2 transition uppercase">A-Z List <span class="text-[10px]">▼</span></button>
                 <div class="absolute top-full left-0 pt-4 w-80 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 text-left">
                     <div class="bg-[#09090b] border border-zinc-800 rounded-xl shadow-2xl p-4">
                         <div id="alpha-index" class="flex flex-wrap gap-1.5"></div>
@@ -103,6 +101,38 @@
             Watch Now
         </a>
     </main>
+
+    <footer class="w-full bg-[#050505]/80 backdrop-blur-md border-t border-zinc-900/50 pt-8 pb-8 mt-auto relative z-10">
+        <div class="max-w-[1400px] mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
+            <p>&copy; 2026 Anime.TV. All rights reserved.</p>
+            <div class="flex gap-6">
+                <button onclick="openBugModal()" class="hover:text-[#d76145] transition">Report Bug</button>
+                <a href="terms.html" class="hover:text-white transition">Terms of Service</a>
+                <a href="privacy.html" class="hover:text-white transition">Privacy Policy</a>
+            </div>
+        </div>
+    </footer>
+
+    <div id="bug-modal" class="fixed inset-0 z-[100] flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="closeBugModal()"></div>
+        <div class="relative bg-[#1c1d22] w-[90%] max-w-lg rounded-2xl p-6 md:p-8 shadow-2xl border border-zinc-800 transform scale-95 transition-transform duration-300" id="bug-modal-content">
+            <button onclick="closeBugModal()" class="absolute top-5 right-5 text-zinc-500 hover:text-white transition bg-zinc-800/50 hover:bg-zinc-700 p-2 rounded-full">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h2 class="text-2xl font-bold text-white mb-2 tracking-tight">Send Request</h2>
+            <p class="text-sm text-zinc-400 mb-6 leading-relaxed pr-6">If you can't find your favourite anime in our library, please submit a request.</p>
+            
+            <form id="bug-form" action="https://formspree.io/f/mwvznpjo" method="POST" class="space-y-4">
+                <input type="text" name="anime_name" placeholder="Anime name or Bug title" required class="w-full bg-[#25262b] border border-transparent focus:border-zinc-600 text-zinc-200 text-sm rounded-xl px-4 py-3.5 outline-none placeholder-zinc-500 transition shadow-inner">
+                <input type="text" name="link" placeholder="Link to MAL/ AL/ anidb or any if possible" class="w-full bg-[#25262b] border border-transparent focus:border-zinc-600 text-zinc-200 text-sm rounded-xl px-4 py-3.5 outline-none placeholder-zinc-500 transition shadow-inner">
+                <textarea name="details" placeholder="More details about it if possible" rows="4" class="w-full bg-[#25262b] border border-transparent focus:border-zinc-600 text-zinc-200 text-sm rounded-xl px-4 py-3.5 outline-none placeholder-zinc-500 transition resize-none hide-scroll shadow-inner"></textarea>
+                <button type="submit" class="w-full bg-[#d76145] hover:bg-[#eb6a4b] text-white font-bold py-3.5 rounded-xl transition duration-300 mt-4 shadow-[0_4px_15px_rgba(215,97,69,0.3)]">
+                    Send Request
+                </button>
+            </form>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
