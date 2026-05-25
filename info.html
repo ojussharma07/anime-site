@@ -3,53 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watch — Anime.TV</title>
+    <title>Anime.TV — Details</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
-<body class="bg-[#09090b] text-zinc-100 font-sans min-h-screen flex flex-col">
+<body class="bg-[#09090b] text-zinc-100 font-sans min-h-screen selection:bg-indigo-500 selection:text-white overflow-x-hidden">
 
-    <header class="w-full bg-[#09090b]/90 backdrop-blur-md border-b border-zinc-900 sticky top-0 z-50 px-6 py-4">
-        <div class="max-w-[1400px] mx-auto flex items-center justify-between">
-            <span class="text-3xl font-black tracking-tight text-white cursor-pointer" onclick="window.location.href='home.html'">Anime<span class="text-indigo-500">.TV</span></span>
-            <button onclick="window.history.back()" class="text-sm font-bold text-zinc-400 hover:text-white transition">← Back to Browse</button>
+    <header class="absolute top-0 w-full z-50 px-4 py-4 bg-gradient-to-b from-black/80 to-transparent">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <a href="home.html" class="text-zinc-300 hover:text-white text-sm font-bold transition flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-4 py-2 rounded-lg hover:bg-white/10">
+                &larr; Back to Browse
+            </a>
+            <span class="text-xl font-black tracking-tight text-white cursor-pointer" onclick="window.location.href='index.html'">Anime<span class="text-indigo-500">.TV</span></span>
         </div>
     </header>
 
-    <section class="w-full bg-black border-b border-zinc-900">
-        <div class="max-w-[1200px] mx-auto aspect-video relative bg-[#050505] flex items-center justify-center" id="player-container">
-            <p id="player-status" class="text-zinc-500 font-bold tracking-widest uppercase text-sm absolute z-10">Select an episode below</p>
-            <video id="player" playsinline controls class="w-full h-full hidden"></video>
+    <section class="relative w-full h-[65vh] md:h-[80vh] flex items-end pb-12 md:pb-24">
+        <div id="backdrop" class="absolute inset-0 bg-zinc-900 bg-cover bg-center bg-no-repeat z-0 transition-opacity duration-1000"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-[#09090b] via-[#09090b]/80 to-transparent z-10"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-[#09090b] via-[#09090b]/60 to-transparent z-10"></div>
+
+        <div class="relative z-20 max-w-7xl mx-auto px-4 w-full flex flex-col md:flex-row items-end md:items-center gap-8">
+            <div class="hidden md:block w-56 shrink-0 rounded-xl overflow-hidden border border-zinc-800 shadow-2xl shadow-black">
+                <img id="poster-img" src="" alt="Poster" class="w-full h-auto object-cover opacity-0 transition-opacity duration-700">
+            </div>
+
+            <div class="flex-1 space-y-4">
+                <div class="flex flex-wrap items-center gap-3 text-xs font-bold text-zinc-300 mb-2" id="meta-badges">
+                    </div>
+                
+                <h1 id="anime-title" class="text-4xl md:text-6xl font-black text-white tracking-tight drop-shadow-2xl line-clamp-2">Loading Database...</h1>
+                
+                <p id="anime-synopsis" class="text-sm text-zinc-400 max-w-3xl line-clamp-3 md:line-clamp-4 leading-relaxed font-medium">Extracting classified files. Please standby...</p>
+                
+                <div class="pt-4 flex flex-wrap items-center gap-4">
+                    <button id="play-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-3.5 rounded-full font-black text-sm hover:scale-105 transition duration-300 flex items-center gap-2 shadow-[0_0_20px_rgba(99,102,241,0.4)] hover:shadow-[0_0_30px_rgba(99,102,241,0.6)] uppercase tracking-wide">
+                        ▶ Watch Episode 1
+                    </button>
+                    <button class="bg-zinc-800/80 hover:bg-zinc-700 backdrop-blur-md text-white px-6 py-3.5 rounded-full font-bold text-sm transition duration-300 flex items-center gap-2 border border-zinc-700">
+                        + Add to List
+                    </button>
+                </div>
+            </div>
         </div>
     </section>
 
-    <main class="max-w-[1200px] mx-auto px-6 py-12 flex-1 w-full grid grid-cols-1 lg:grid-cols-3 gap-12">
-        
-        <div class="lg:col-span-1 space-y-6">
-            <img id="anime-cover" src="" alt="Cover" class="w-full md:w-2/3 lg:w-full rounded-2xl shadow-2xl border border-zinc-800 hidden">
-            <div>
-                <h1 id="anime-title" class="text-3xl md:text-4xl font-black text-white leading-tight mb-2">Loading...</h1>
-                <div class="flex items-center gap-3 text-xs font-bold text-zinc-400 uppercase tracking-widest mb-4" id="anime-meta"></div>
-                <p id="anime-desc" class="text-sm text-zinc-300 leading-relaxed line-clamp-6"></p>
+    <main class="relative z-20 max-w-7xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 space-y-6">
+            <h2 class="text-xl font-black tracking-tight text-white uppercase border-b border-zinc-900 pb-3">Official Trailer</h2>
+            <div id="trailer-container" class="w-full aspect-video bg-black rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl relative flex items-center justify-center">
+                <p class="text-zinc-600 text-sm font-bold">No trailer available for this title.</p>
             </div>
         </div>
 
-        <div class="lg:col-span-2">
-            <div class="flex items-center justify-between border-b border-zinc-800 pb-4 mb-6">
-                <h2 class="text-xl font-black text-white uppercase tracking-tight">Episodes</h2>
-                <span id="ep-count" class="text-xs font-bold text-indigo-400 bg-indigo-500/10 px-3 py-1 rounded-full">...</span>
-            </div>
-            
-            <div id="episode-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                <p class="text-zinc-500 text-sm col-span-full">Fetching episodes from server...</p>
+        <div class="space-y-6">
+            <h2 class="text-xl font-black tracking-tight text-white uppercase border-b border-zinc-900 pb-3">Main Cast</h2>
+            <div id="character-list" class="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                <p class="text-zinc-500 text-sm">Loading cast records...</p>
             </div>
         </div>
     </main>
 
-    <script src="stream.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const animeId = urlParams.get('id');
+        const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
+
+        if (!animeId) {
+            window.location.href = 'home.html'; 
+        }
+
+        fetch(`https://api.jikan.moe/v4/anime/${animeId}/full`)
+            .then(res => res.json())
+            .then(data => {
+                const anime = data.data;
+                const title = anime.title;
+                const coverImg = anime.images?.jpg?.large_image_url || '';
+                
+                document.title = `${title} — Anime.TV`;
+                document.getElementById('anime-title').textContent = title;
+                
+                // NEW: Robust Synopsis Fallback for unreleased shows!
+                let desc = anime.synopsis || anime.background || "No synopsis information has been added to the database yet.";
+                desc = desc.replace(/\[Written by MAL Rewrite\]/gi, '').trim();
+                document.getElementById('anime-synopsis').textContent = desc;
+                
+                document.getElementById('poster-img').src = coverImg;
+                document.getElementById('poster-img').classList.remove('opacity-0');
+
+                // NEW: Extract Genres directly from the API
+                let genresList = "Unknown Genre";
+                if (anime.genres && anime.genres.length > 0) {
+                    genresList = anime.genres.map(g => g.name).join(', ');
+                }
+
+                // Add the sleek Indigo genre badge at the end of the metadata
+                const badgesHtml = `
+                    <span class="bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 px-2 py-0.5 rounded flex items-center gap-1">★ ${anime.score || 'N/A'}</span>
+                    <span class="bg-zinc-800 border border-zinc-700 px-2 py-0.5 rounded">${anime.rating ? anime.rating.split(' ')[0] : 'NR'}</span>
+                    <span class="bg-zinc-800 border border-zinc-700 px-2 py-0.5 rounded">${anime.type}</span>
+                    <span class="bg-zinc-800 border border-zinc-700 px-2 py-0.5 rounded">${anime.year || 'TBA'}</span>
+                    <span class="bg-zinc-800 border border-zinc-700 px-2 py-0.5 rounded">${anime.status}</span>
+                    <span class="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded">${genresList}</span>
+                `;
+                document.getElementById('meta-badges').innerHTML = badgesHtml;
+
+                // --- SAVE TO LOCAL HISTORY ---
+                let history = JSON.parse(localStorage.getItem('animeHistory') || '[]');
+                history = history.filter(item => item.mal_id !== anime.mal_id);
+                history.unshift({ mal_id: anime.mal_id, title: title, img: coverImg });
+                if (history.length > 30) history.pop();
+                localStorage.setItem('animeHistory', JSON.stringify(history));
+
+                // 1. Load Japanese Trailer as Fallback
+                if (anime.trailer && anime.trailer.embed_url) {
+                    document.getElementById('trailer-container').innerHTML = `
+                        <iframe src="${anime.trailer.embed_url}?autoplay=0&mute=0" class="w-full h-full" frameborder="0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    `;
+                }
+
+                document.getElementById('play-btn').addEventListener('click', () => {
+                    const safeTitle = encodeURIComponent(title);
+                    const safeImg = encodeURIComponent(coverImg);
+                    window.location.href = `player.html?title=${safeTitle}&mal_id=${anime.mal_id}&img=${safeImg}`;
+                });
+
+                // 2. TMDb Advanced Fetch (Backdrop + English Trailer)
+                const tmdbType = anime.type === 'Movie' ? 'movie' : 'tv';
+                
+                fetch(`https://api.themoviedb.org/3/search/${tmdbType}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(title)}`)
+                    .then(res => res.json())
+                    .then(tmdb => {
+                        const backdrop = document.getElementById('backdrop');
+                        if (tmdb.results && tmdb.results.length > 0) {
+                            const tmdbId = tmdb.results[0].id;
+
+                            if (tmdb.results[0].backdrop_path) {
+                                backdrop.style.backgroundImage = `url('https://image.tmdb.org/t/p/original${tmdb.results[0].backdrop_path}')`;
+                            } else if (anime.trailer?.images?.maximum_image_url) {
+                                backdrop.style.backgroundImage = `url('${anime.trailer.images.maximum_image_url}')`;
+                            }
+
+                            fetch(`https://api.themoviedb.org/3/${tmdbType}/${tmdbId}/videos?api_key=${TMDB_API_KEY}&language=en-US`)
+                                .then(vRes => vRes.json())
+                                .then(videoData => {
+                                    if (videoData.results && videoData.results.length > 0) {
+                                        let engTrailer = videoData.results.find(v => v.type === 'Trailer' && v.site === 'YouTube');
+                                        if (engTrailer) {
+                                            document.getElementById('trailer-container').innerHTML = `
+                                                <iframe src="https://www.youtube.com/embed/${engTrailer.key}?autoplay=0&mute=0" class="w-full h-full" frameborder="0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                            `;
+                                        }
+                                    }
+                                }).catch(e => console.log("No English trailer found"));
+
+                        } else if (anime.trailer?.images?.maximum_image_url) {
+                            backdrop.style.backgroundImage = `url('${anime.trailer.images.maximum_image_url}')`;
+                        }
+                    }).catch(() => console.log("TMDB fetch failed"));
+            })
+            .catch(err => {
+                document.getElementById('anime-title').textContent = "Database Offline";
+                document.getElementById('anime-synopsis').textContent = "Failed to load anime details.";
+            });
+
+        // Fetch Characters
+        fetch(`https://api.jikan.moe/v4/anime/${animeId}/characters`)
+            .then(res => res.json())
+            .then(data => {
+                const charList = document.getElementById('character-list');
+                charList.innerHTML = '';
+                
+                const mainCast = data.data.slice(0, 8);
+                if(mainCast.length === 0) {
+                    charList.innerHTML = `<p class="text-zinc-500 text-sm">Cast records classified.</p>`;
+                    return;
+                }
+
+                mainCast.forEach(castItem => {
+                    const charName = castItem.character.name;
+                    const charImg = castItem.character.images?.jpg?.image_url;
+                    const role = castItem.role;
+                    
+                    let vaName = "Unknown VA";
+                    if (castItem.voice_actors && castItem.voice_actors.length > 0) {
+                        const jpVA = castItem.voice_actors.find(va => va.language === 'Japanese');
+                        if (jpVA) vaName = jpVA.person.name;
+                    }
+
+                    charList.innerHTML += `
+                        <div class="flex items-center gap-3 bg-zinc-900/50 border border-zinc-800/50 p-2 rounded-xl">
+                            <img src="${charImg}" class="w-12 h-12 rounded-lg object-cover bg-zinc-800">
+                            <div>
+                                <p class="text-sm font-bold text-white">${charName}</p>
+                                <p class="text-[10px] text-zinc-400 uppercase tracking-wider">${role} • VA: ${vaName}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+    </script>
 </body>
 </html>
