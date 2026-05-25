@@ -4,24 +4,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!jikanId) {
         document.getElementById('anime-title').textContent = "No Anime Selected";
-        document.getElementById('anime-desc').textContent = "Please return to the home page and select an anime to view its details.";
-        document.getElementById('anime-badges').innerHTML = "";
         return;
     }
 
     // --- APIs ---
     const JIKAN_API = `https://api.jikan.moe/v4/anime/${jikanId}/full`;
     const CAST_API = `https://api.jikan.moe/v4/anime/${jikanId}/characters`;
-    
-    // We use GogoAnime via Consumet API as the reliable engine to get episodes
     const CONSUMET_API = `https://api.consumet.org/anime/gogoanime`; 
 
     // --- GLOBALS ---
     let animeTitle = "";
     let episodesLoaded = false;
-    const video = document.getElementById('video-element');
+    let plyrInstance = null;
+    
+    const videoWrapper = document.getElementById('video-wrapper');
+    const videoElement = document.getElementById('video-element');
+    const placeholder = document.getElementById('player-placeholder');
     const statusText = document.getElementById('player-status');
-    let plyrInstance = new Plyr(video);
 
     try {
         // 1. POPULATE UI
@@ -83,44 +82,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     } catch (error) {
         document.getElementById('anime-title').textContent = "Data Fetch Failed";
-        document.getElementById('anime-desc').textContent = "Please refresh the page in a few seconds.";
     }
 
     // --- MODAL & EPISODE EXTRACTION LOGIC ---
-    window.openPlayerModal = async function() {
+    window.openPlayerModal = function() {
         const modal = document.getElementById('player-modal');
         modal.classList.remove('hidden');
         setTimeout(() => modal.classList.remove('opacity-0'), 10);
 
-        // Only fetch episodes once
-        if (episodesLoaded || !animeTitle) return;
-        episodesLoaded = true;
-
-        try {
-            const encodedTitle = encodeURIComponent(animeTitle);
-            const searchRes = await fetch(`${CONSUMET_API}/${encodedTitle}`);
-            const searchData = await searchRes.json();
-
-            if (!searchData.results || searchData.results.length === 0) throw new Error("Not found on server");
-
-            const streamingId = searchData.results[0].id;
-            const infoRes = await fetch(`${CONSUMET_API}/info/${streamingId}`);
-            const infoData = await infoRes.json();
-
-            const epList = document.getElementById('episode-list');
-            epList.innerHTML = '';
-
-            infoData.episodes.forEach(ep => {
-                const btn = document.createElement('button');
-                btn.className = "shrink-0 bg-zinc-800 hover:bg-[#5a4fcf] text-zinc-300 hover:text-white px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition duration-300";
-                btn.textContent = `EP ${ep.number}`;
-                btn.onclick = () => loadVideo(ep.id, btn);
-                epList.appendChild(btn);
-            });
-
-        } catch (error) {
-            document.getElementById('ep-loading-text').textContent = "Failed to extract episodes. API rate limit reached.";
-            document.getElementById('ep-loading-text').classList.add('text-red-500');
+        if (!episodesLoaded && animeTitle) {
+            fetchEpisodes();
         }
     };
 
@@ -128,64 +99,131 @@ document.addEventListener("DOMContentLoaded", async () => {
         const modal = document.getElementById('player-modal');
         modal.classList.add('opacity-0');
         
-        // Stop video and clear source
+        // Stop video cleanly
         if (window.hls) window.hls.destroy();
-        video.pause();
-        video.src = "";
+        if (plyrInstance) plyrInstance.destroy();
+        plyrInstance = null;
+        videoElement.src = "";
         
-        statusText.classList.remove('hidden');
-        video.classList.add('hidden');
+        // Reset UI to placeholder
+        videoWrapper.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+        statusText.textContent = "Select an episode to start";
         
+        // Reset button highlights
         document.querySelectorAll('#episode-list button').forEach(b => {
-            b.classList.remove('bg-[#5a4fcf]', 'text-white');
-            b.classList.add('bg-zinc-800', 'text-zinc-300');
+            b.classList.remove('bg-[#5a4fcf]', 'text-white', 'border-[#5a4fcf]');
+            b.classList.add('bg-zinc-800/50', 'text-zinc-400', 'border-zinc-800');
         });
 
         setTimeout(() => modal.classList.add('hidden'), 300);
     };
 
+    async function fetchEpisodes() {
+        episodesLoaded = true;
+        const epList = document.getElementById('episode-list');
+
+        try {
+            const encodedTitle = encodeURIComponent(animeTitle);
+            const searchRes = await fetch(`${CONSUMET_API}/${encodedTitle}`);
+            
+            if (!searchRes.ok) throw new Error("Rate Limited");
+            const searchData = await searchRes.json();
+
+            if (!searchData.results || searchData.results.length === 0) {
+                epList.innerHTML = `<div class="p-4 text-center text-red-400 text-sm font-bold">No episodes found on server.</div>`;
+                return;
+            }
+
+            const streamingId = searchData.results[0].id;
+            const infoRes = await fetch(`${CONSUMET_API}/info/${streamingId}`);
+            if (!infoRes.ok) throw new Error("Rate Limited");
+            const infoData = await infoRes.json();
+
+            // Update badge
+            const badge = document.getElementById('ep-count-badge');
+            badge.textContent = `${infoData.episodes.length} EPS`;
+            badge.classList.remove('hidden');
+
+            epList.innerHTML = '';
+            infoData.episodes.forEach(ep => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left px-4 py-3 bg-zinc-800/50 border border-zinc-800 hover:border-[#5a4fcf] text-zinc-400 hover:text-white transition rounded-xl text-sm font-bold flex items-center justify-between group";
+                btn.innerHTML = `
+                    <span>Episode ${ep.number}</span>
+                    <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-indigo-400" fill="currentColor" viewBox="0 0 24 24"><path d="M7 6v12l10-6z"></path></svg>
+                `;
+                btn.onclick = () => loadVideo(ep.id, btn);
+                epList.appendChild(btn);
+            });
+
+        } catch (error) {
+            episodesLoaded = false; // allow retry
+            epList.innerHTML = `
+                <div class="p-6 flex flex-col items-center text-center">
+                    <svg class="w-10 h-10 text-red-500/80 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <p class="text-zinc-300 text-sm font-bold mb-1">Server Overloaded</p>
+                    <p class="text-zinc-500 text-xs mb-4">The public API blocked the request. Please try again.</p>
+                    <button onclick="fetchEpisodes()" class="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition">Retry Connection</button>
+                </div>
+            `;
+        }
+    }
+
     // --- RAW VIDEO PLAYBACK LOGIC ---
     async function loadVideo(episodeId, activeBtn) {
-        statusText.textContent = "Connecting to server to extract video...";
-        statusText.classList.remove('hidden');
-        video.classList.add('hidden');
+        // UI Updates for loading
+        placeholder.classList.remove('hidden');
+        videoWrapper.classList.add('hidden');
+        statusText.textContent = "Connecting to video server...";
+        
+        // Destroy old player instance if switching episodes
+        if (window.hls) window.hls.destroy();
+        if (plyrInstance) plyrInstance.destroy();
 
+        // Highlight sidebar button
         document.querySelectorAll('#episode-list button').forEach(b => {
-            b.classList.remove('bg-[#5a4fcf]', 'text-white');
-            b.classList.add('bg-zinc-800', 'text-zinc-300');
+            b.classList.remove('bg-[#5a4fcf]', 'text-white', 'border-[#5a4fcf]');
+            b.classList.add('bg-zinc-800/50', 'text-zinc-400', 'border-zinc-800');
+            b.querySelector('svg').classList.add('opacity-0');
         });
-        activeBtn.classList.remove('bg-zinc-800', 'text-zinc-300');
-        activeBtn.classList.add('bg-[#5a4fcf]', 'text-white');
+        activeBtn.classList.remove('bg-zinc-800/50', 'text-zinc-400', 'border-zinc-800');
+        activeBtn.classList.add('bg-[#5a4fcf]', 'text-white', 'border-[#5a4fcf]');
+        activeBtn.querySelector('svg').classList.remove('opacity-0');
 
         try {
             const streamRes = await fetch(`${CONSUMET_API}/watch/${episodeId}`);
+            if (!streamRes.ok) throw new Error("Video Blocked");
             const streamData = await streamRes.json();
 
-            // Find best quality link
             const source = streamData.sources.find(s => s.quality === '1080p' || s.quality === 'auto') || streamData.sources[0];
 
+            // Setup new player
+            plyrInstance = new Plyr(videoElement, {
+                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
+            });
+
             if (Hls.isSupported()) {
-                if (window.hls) window.hls.destroy();
                 const hls = new Hls();
                 hls.loadSource(source.url);
-                hls.attachMedia(video);
+                hls.attachMedia(videoElement);
                 window.hls = hls;
                 
                 hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                    statusText.classList.add('hidden');
-                    video.classList.remove('hidden');
-                    video.play();
+                    placeholder.classList.add('hidden');
+                    videoWrapper.classList.remove('hidden');
+                    videoElement.play();
                 });
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                video.src = source.url;
-                video.addEventListener('loadedmetadata', () => {
-                    statusText.classList.add('hidden');
-                    video.classList.remove('hidden');
-                    video.play();
+            } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+                videoElement.src = source.url;
+                videoElement.addEventListener('loadedmetadata', () => {
+                    placeholder.classList.add('hidden');
+                    videoWrapper.classList.remove('hidden');
+                    videoElement.play();
                 });
             }
         } catch (error) {
-            statusText.textContent = "Stream blocked. API currently overloaded.";
+            statusText.textContent = "Video server rejected connection (Rate Limit).";
         }
     }
 });
