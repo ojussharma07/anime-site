@@ -3,113 +3,148 @@ document.addEventListener("DOMContentLoaded", async () => {
     const jikanId = urlParams.get('id');
 
     if (!jikanId) {
-        document.getElementById('anime-title').textContent = "Error: No Anime Found";
+        document.getElementById('anime-title').textContent = "Error: No Anime ID provided in URL";
         return;
     }
 
-    // API Endpoints
-    const JIKAN_API = `https://api.jikan.moe/v4/anime/${jikanId}`;
-    // NOTE: Public consumet instances change frequently. 
-    // If this URL fails, you need to self-host or find an active public instance.
-    const CONSUMET_API = `https://api.consumet.org/anime/gogoanime`; 
-
-    // Setup Video Player
-    const video = document.getElementById('player');
-    const playerContainer = document.getElementById('player-container');
-    const statusText = document.getElementById('player-status');
-    const defaultOptions = {}; 
-    let player = new Plyr(video, defaultOptions);
+    // Fetch Full Anime Details & Characters
+    const JIKAN_API = `https://api.jikan.moe/v4/anime/${jikanId}/full`;
+    const CAST_API = `https://api.jikan.moe/v4/anime/${jikanId}/characters`;
 
     try {
-        // 1. Fetch Metadata from Jikan
-        const jikanRes = await fetch(JIKAN_API);
-        const jikanData = await jikanRes.json();
-        const anime = jikanData.data;
+        // --- 1. POPULATE UI METADATA ---
+        const [animeRes, castRes] = await Promise.all([ fetch(JIKAN_API), fetch(CAST_API) ]);
+        const animeData = await animeRes.json();
+        const castData = await castRes.json();
+        const anime = animeData.data;
 
-        // Populate UI with Metadata
-        document.getElementById('anime-title').textContent = anime.title_english || anime.title;
-        document.getElementById('anime-desc').textContent = anime.synopsis || "No synopsis available.";
-        document.getElementById('anime-meta').innerHTML = `<span class="text-indigo-400">★ ${anime.score || 'N/A'}</span> <span>•</span> <span>${anime.status}</span> <span>•</span> <span>${anime.type}</span>`;
+        const title = anime.title_english || anime.title;
+        document.getElementById('anime-title').textContent = title;
+        document.getElementById('anime-desc').textContent = anime.synopsis || "No synopsis available for this title.";
         
+        // Load Cover Art
         const cover = document.getElementById('anime-cover');
         cover.src = anime.images?.jpg?.large_image_url;
-        cover.classList.remove('hidden');
+        cover.onload = () => cover.classList.remove('hidden');
 
-        // 2. Search for the Streaming ID using the title
-        const searchQuery = encodeURIComponent(anime.title_english || anime.title);
-        const searchRes = await fetch(`${CONSUMET_API}/${searchQuery}`);
-        const searchData = await searchRes.json();
-
-        if (!searchData.results || searchData.results.length === 0) {
-            document.getElementById('episode-grid').innerHTML = `<p class="text-red-500 col-span-full">No streaming servers found for this anime.</p>`;
-            return;
+        // Load Backdrop (If available from trailer images, otherwise fallback to cover)
+        const backdropUrl = anime.trailer?.images?.maximum_image_url || anime.images?.jpg?.large_image_url;
+        const backdrop = document.getElementById('backdrop-container');
+        if (backdropUrl) {
+            backdrop.style.backgroundImage = `url('${backdropUrl}')`;
+            backdrop.classList.remove('opacity-0');
+            backdrop.classList.add('opacity-100');
         }
 
-        // Grab the closest match (usually the first result)
-        const streamingId = searchData.results[0].id;
+        // Build Badges (Matching Screenshot exact style)
+        let badgesHTML = ``;
+        if (anime.score) badgesHTML += `<span class="bg-yellow-500/20 text-yellow-500 px-2.5 py-1 rounded-md border border-yellow-500/30 shadow-sm">★ ${anime.score}</span>`;
+        if (anime.rating) badgesHTML += `<span class="bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-md">${anime.rating.split(' ')[0]}</span>`;
+        if (anime.type) badgesHTML += `<span class="bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-md">${anime.type}</span>`;
+        if (anime.year) badgesHTML += `<span class="bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-md">${anime.year}</span>`;
+        if (anime.status) badgesHTML += `<span class="bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-md">${anime.status}</span>`;
+        
+        let genresList = anime.genres.map(g => g.name).concat(anime.themes.map(t => t.name)).slice(0, 4);
+        if (genresList.length > 0) {
+            badgesHTML += `<span class="text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-md ml-2">${genresList.join(', ')}</span>`;
+        }
+        document.getElementById('anime-badges').innerHTML = badgesHTML;
 
-        // 3. Fetch Episodes for that ID
-        const infoRes = await fetch(`${CONSUMET_API}/info/${streamingId}`);
-        const infoData = await infoRes.json();
+        // Load Official Trailer
+        if (anime.trailer?.embed_url) {
+            document.getElementById('trailer-container').innerHTML = `
+                <iframe src="${anime.trailer.embed_url}?autoplay=0&controls=1&modestbranding=1" class="w-full h-full" frameborder="0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            `;
+        }
 
-        // 4. Render Episode Buttons
-        const epGrid = document.getElementById('episode-grid');
-        document.getElementById('ep-count').textContent = `${infoData.episodes.length} Episodes`;
-        epGrid.innerHTML = '';
-
-        infoData.episodes.forEach(ep => {
-            const btn = document.createElement('button');
-            btn.className = "bg-[#151518] border border-zinc-800 hover:border-indigo-500 hover:bg-indigo-600/10 text-zinc-300 hover:text-white transition rounded-xl py-3 text-sm font-bold text-center w-full";
-            btn.textContent = `Episode ${ep.number}`;
+        // Load Main Cast (Top 4 Characters)
+        const castContainer = document.getElementById('cast-list');
+        castContainer.innerHTML = '';
+        const mainCast = castData.data.slice(0, 4);
+        
+        if (mainCast.length === 0) castContainer.innerHTML = `<p class="text-zinc-600 text-sm font-bold">Cast information unavailable.</p>`;
+        
+        mainCast.forEach(c => {
+            const voiceActor = c.voice_actors.find(va => va.language === 'Japanese');
+            const vaName = voiceActor ? voiceActor.person.name : "Unknown VA";
             
-            btn.onclick = () => loadVideo(ep.id, btn);
-            epGrid.appendChild(btn);
+            castContainer.innerHTML += `
+                <div class="flex items-center gap-4 bg-[#151518] border border-zinc-800/50 p-2.5 rounded-xl hover:bg-zinc-800 transition">
+                    <img src="${c.character.images?.jpg?.image_url}" class="w-12 h-12 rounded-lg object-cover shadow-md">
+                    <div class="flex-1 overflow-hidden">
+                        <h4 class="text-sm font-bold text-white truncate">${c.character.name}</h4>
+                        <p class="text-[10px] text-zinc-500 font-bold tracking-wide uppercase mt-0.5">VA: ${vaName}</p>
+                    </div>
+                </div>
+            `;
+        });
+
+        // --- 2. SETUP IFRAME STREAMING SERVERS ---
+        const encodedTitle = encodeURIComponent(title);
+        const servers = [
+            { name: "HiAnime", url: `https://hianime.to/search?keyword=${encodedTitle}` },
+            { name: "GogoAnime", url: `https://gogoanime3.co/search.html?keyword=${encodedTitle}` },
+            { name: "9anime", url: `https://9anime.org.lv/search?keyword=${encodedTitle}` },
+            { name: "MyFlixer", url: `https://myflixer.bz/search/${encodedTitle}` },
+            { name: "AniGo", url: `https://anigo.to/search?keyword=${encodedTitle}` },
+            { name: "AnimePahe", url: `https://animepahe.pw/` } 
+        ];
+
+        const serverList = document.getElementById('server-list');
+        servers.forEach(server => {
+            const btn = document.createElement('button');
+            btn.className = "shrink-0 bg-zinc-800 hover:bg-[#5a4fcf] text-zinc-300 hover:text-white px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition duration-300";
+            btn.textContent = server.name;
+            btn.onclick = () => loadIframe(server.url, btn);
+            serverList.appendChild(btn);
         });
 
     } catch (error) {
-        console.error(error);
-        document.getElementById('episode-grid').innerHTML = `<p class="text-red-500 col-span-full">API Error. The public streaming server might be down or rate-limited.</p>`;
+        console.error("Error loading info:", error);
+        document.getElementById('anime-title').textContent = "Failed to load data";
     }
 
-    // --- VIDEO LOADING LOGIC ---
-    async function loadVideo(episodeId, activeBtn) {
-        statusText.textContent = "Loading stream...";
-        video.classList.add('hidden');
+    // --- IFRAME MODAL LOGIC ---
+    window.openIframeModal = function() {
+        const modal = document.getElementById('iframe-modal');
+        modal.classList.remove('hidden');
+        setTimeout(() => modal.classList.remove('opacity-0'), 10);
+    };
 
-        // Highlight active button
-        document.querySelectorAll('#episode-grid button').forEach(b => b.classList.remove('border-indigo-500', 'bg-indigo-600/10', 'text-white'));
-        activeBtn.classList.add('border-indigo-500', 'bg-indigo-600/10', 'text-white');
+    window.closeIframeModal = function() {
+        const modal = document.getElementById('iframe-modal');
+        modal.classList.add('opacity-0');
+        
+        // Stop iframe from playing audio in background when closed
+        document.getElementById('stream-frame').src = "";
+        document.getElementById('iframe-status').classList.remove('hidden');
+        document.getElementById('stream-frame').classList.add('hidden');
+        
+        // Reset button styles
+        document.querySelectorAll('#server-list button').forEach(b => {
+            b.classList.remove('bg-[#5a4fcf]', 'text-white');
+            b.classList.add('bg-zinc-800', 'text-zinc-300');
+        });
 
-        try {
-            const streamRes = await fetch(`${CONSUMET_API}/watch/${episodeId}`);
-            const streamData = await streamRes.json();
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    };
 
-            // Find best quality (usually auto or 1080p)
-            const source = streamData.sources.find(s => s.quality === 'auto' || s.quality === '1080p') || streamData.sources[0];
+    function loadIframe(url, activeBtn) {
+        const iframe = document.getElementById('stream-frame');
+        const statusText = document.getElementById('iframe-status');
 
-            if (Hls.isSupported()) {
-                const hls = new Hls();
-                hls.loadSource(source.url);
-                hls.attachMedia(video);
-                window.hls = hls; // Make it global so we can destroy it later if needed
-                
-                hls.on(Hls.Events.MANIFEST_PARSED, function () {
-                    statusText.classList.add('hidden');
-                    video.classList.remove('hidden');
-                    video.play();
-                });
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                // Native Safari support
-                video.src = source.url;
-                video.addEventListener('loadedmetadata', function () {
-                    statusText.classList.add('hidden');
-                    video.classList.remove('hidden');
-                    video.play();
-                });
-            }
-        } catch (error) {
-            statusText.textContent = "Failed to load stream. Server might be blocked.";
-            statusText.classList.remove('hidden');
-        }
+        statusText.classList.add('hidden');
+        iframe.classList.remove('hidden');
+
+        // Style the active server button
+        document.querySelectorAll('#server-list button').forEach(b => {
+            b.classList.remove('bg-[#5a4fcf]', 'text-white');
+            b.classList.add('bg-zinc-800', 'text-zinc-300');
+        });
+        activeBtn.classList.remove('bg-zinc-800', 'text-zinc-300');
+        activeBtn.classList.add('bg-[#5a4fcf]', 'text-white');
+
+        // Set the iframe source
+        iframe.src = url;
     }
 });
