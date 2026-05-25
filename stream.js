@@ -11,19 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const JIKAN_API = `https://api.jikan.moe/v4/anime/${jikanId}/full`;
     const CAST_API = `https://api.jikan.moe/v4/anime/${jikanId}/characters`;
     
-    // --- YOUR NEW PRIVATE ENGINE ---
-    // Replace this string with your exact live URL copied from Render!
-    const MY_PRIVATE_API = `https://my-private-anime-api.onrender.com/anime/gogoanime`;
-
-    // --- GLOBALS ---
     let animeTitle = "";
-    let episodesLoaded = false;
-    let plyrInstance = null;
-    
-    const videoWrapper = document.getElementById('video-wrapper');
-    const videoElement = document.getElementById('video-element');
-    const placeholder = document.getElementById('player-placeholder');
-    const statusText = document.getElementById('player-status');
 
     try {
         // 1. POPULATE UI
@@ -67,6 +55,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const castContainer = document.getElementById('cast-list');
         castContainer.innerHTML = '';
         const mainCast = castData.data ? castData.data.slice(0, 4) : [];
+        if (mainCast.length === 0) castContainer.innerHTML = `<p class="text-zinc-600 text-sm font-bold">Cast information unavailable.</p>`;
         
         mainCast.forEach(c => {
             const voiceActor = c.voice_actors?.find(va => va.language === 'Japanese');
@@ -82,136 +71,44 @@ document.addEventListener("DOMContentLoaded", async () => {
             `;
         });
 
+        // 2. PREPARE THE SERVERS
+        const encodedTitle = encodeURIComponent(animeTitle);
+        const servers = [
+            { name: "HiAnime", url: `https://hianime.to/search?keyword=${encodedTitle}` },
+            { name: "GogoAnime", url: `https://gogoanime3.co/search.html?keyword=${encodedTitle}` },
+            { name: "AnimePahe", url: `https://animepahe.pw/` },
+            { name: "Crunchyroll", url: `https://www.crunchyroll.com/search?q=${encodedTitle}` }
+        ];
+
+        const serverGrid = document.getElementById('server-grid');
+        serverGrid.innerHTML = '';
+
+        servers.forEach(server => {
+            const btn = document.createElement('button');
+            btn.className = "w-full flex items-center justify-between p-6 bg-zinc-900 border border-zinc-800 hover:border-[#5a4fcf] rounded-2xl group transition-all duration-300 hover:shadow-[0_0_20px_rgba(90,79,207,0.2)]";
+            btn.innerHTML = `
+                <span class="text-lg font-black text-white uppercase tracking-widest group-hover:text-[#5a4fcf] transition-colors">${server.name}</span>
+                <svg class="w-6 h-6 text-zinc-600 group-hover:text-[#5a4fcf] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+            `;
+            // Open in new tab
+            btn.onclick = () => window.open(server.url, '_blank');
+            serverGrid.appendChild(btn);
+        });
+
     } catch (error) {
         document.getElementById('anime-title').textContent = "Data Fetch Failed";
     }
 
-    // --- MODAL & EPISODE EXTRACTION LOGIC ---
-    window.openPlayerModal = function() {
-        const modal = document.getElementById('player-modal');
+    // --- MODAL LOGIC ---
+    window.openServerModal = function() {
+        const modal = document.getElementById('server-modal');
         modal.classList.remove('hidden');
         setTimeout(() => modal.classList.remove('opacity-0'), 10);
-
-        if (!episodesLoaded && animeTitle) {
-            fetchEpisodes();
-        }
     };
 
-    window.closePlayerModal = function() {
-        const modal = document.getElementById('player-modal');
+    window.closeServerModal = function() {
+        const modal = document.getElementById('server-modal');
         modal.classList.add('opacity-0');
-        
-        if (window.hls) window.hls.destroy();
-        if (plyrInstance) plyrInstance.destroy();
-        plyrInstance = null;
-        videoElement.src = "";
-        
-        videoWrapper.classList.add('hidden');
-        placeholder.classList.remove('hidden');
-        statusText.textContent = "Select an episode to start";
-        
-        document.querySelectorAll('#episode-list button').forEach(b => {
-            b.classList.remove('bg-[#5a4fcf]', 'text-white', 'border-[#5a4fcf]');
-            b.classList.add('bg-zinc-800/50', 'text-zinc-400', 'border-zinc-800');
-        });
-
         setTimeout(() => modal.classList.add('hidden'), 300);
     };
-
-    async function fetchEpisodes() {
-        episodesLoaded = true;
-        const epList = document.getElementById('episode-list');
-
-        try {
-            const encodedTitle = encodeURIComponent(animeTitle);
-            const searchRes = await fetch(`${MY_PRIVATE_API}/${encodedTitle}`);
-            const searchData = await searchRes.json();
-
-            if (!searchData.results || searchData.results.length === 0) {
-                epList.innerHTML = `<div class="p-4 text-center text-red-400 text-sm font-bold">No episodes found on server.</div>`;
-                return;
-            }
-
-            const streamingId = searchData.results[0].id;
-            const infoRes = await fetch(`${MY_PRIVATE_API}/info/${streamingId}`);
-            const infoData = await infoRes.json();
-
-            const badge = document.getElementById('ep-count-badge');
-            badge.textContent = `${infoData.episodes.length} EPS`;
-            badge.classList.remove('hidden');
-
-            epList.innerHTML = '';
-            infoData.episodes.forEach(ep => {
-                const btn = document.createElement('button');
-                btn.className = "w-full text-left px-4 py-3 bg-zinc-800/50 border border-zinc-800 hover:border-[#5a4fcf] text-zinc-400 hover:text-white transition rounded-xl text-sm font-bold flex items-center justify-between group";
-                btn.innerHTML = `
-                    <span>Episode ${ep.number}</span>
-                    <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-indigo-400" fill="currentColor" viewBox="0 0 24 24"><path d="M7 6v12l10-6z"></path></svg>
-                `;
-                btn.onclick = () => loadVideo(ep.id, btn);
-                epList.appendChild(btn);
-            });
-
-        } catch (error) {
-            episodesLoaded = false;
-            epList.innerHTML = `
-                <div class="p-6 flex flex-col items-center text-center">
-                    <svg class="w-10 h-10 text-red-500/80 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                    <p class="text-zinc-300 text-sm font-bold mb-1">Server Wake-Up</p>
-                    <p class="text-zinc-500 text-xs mb-4">Free Render servers spin down after inactivity. Click retry to ping the server.</p>
-                    <button onclick="fetchEpisodes()" class="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition">Retry Connection</button>
-                </div>
-            `;
-        }
-    }
-
-    // --- RAW VIDEO PLAYBACK LOGIC ---
-    async function loadVideo(episodeId, activeBtn) {
-        placeholder.classList.remove('hidden');
-        videoWrapper.classList.add('hidden');
-        statusText.textContent = "Connecting to video server...";
-        
-        if (window.hls) window.hls.destroy();
-        if (plyrInstance) plyrInstance.destroy();
-
-        document.querySelectorAll('#episode-list button').forEach(b => {
-            b.classList.remove('bg-[#5a4fcf]', 'text-white', 'border-[#5a4fcf]');
-            b.classList.add('bg-zinc-800/50', 'text-zinc-400', 'border-zinc-800');
-            b.querySelector('svg').classList.add('opacity-0');
-        });
-        activeBtn.classList.remove('bg-zinc-800/50', 'text-zinc-400', 'border-zinc-800');
-        activeBtn.classList.add('bg-[#5a4fcf]', 'text-white', 'border-[#5a4fcf]');
-        activeBtn.querySelector('svg').classList.remove('opacity-0');
-
-        try {
-            const streamData = await fetch(`${MY_PRIVATE_API}/watch/${episodeId}`).then(res => res.json());
-            const source = streamData.sources.find(s => s.quality === '1080p' || s.quality === 'auto') || streamData.sources[0];
-
-            plyrInstance = new Plyr(videoElement, {
-                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
-            });
-
-            if (Hls.isSupported()) {
-                const hls = new Hls();
-                hls.loadSource(source.url);
-                hls.attachMedia(videoElement);
-                window.hls = hls;
-                
-                hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                    placeholder.classList.add('hidden');
-                    videoWrapper.classList.remove('hidden');
-                    videoElement.play();
-                });
-            } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-                videoElement.src = source.url;
-                videoElement.addEventListener('loadedmetadata', () => {
-                    placeholder.classList.add('hidden');
-                    videoWrapper.classList.remove('hidden');
-                    videoElement.play();
-                });
-            }
-        } catch (error) {
-            statusText.textContent = "Video link extraction failed.";
-        }
-    }
 });
