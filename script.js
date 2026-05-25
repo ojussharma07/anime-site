@@ -1,229 +1,347 @@
-document.addEventListener("DOMContentLoaded", async () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const jikanId = urlParams.get('id');
+document.addEventListener("DOMContentLoaded", () => {
+    // --- ACTIVE NAV TEXT ---
+    try {
+        const navLinks = document.querySelectorAll('.nav-link, nav button'); 
+        const currentUrl = window.location.href;
+        navLinks.forEach(link => {
+            link.classList.remove('text-indigo-400', 'font-black', 'drop-shadow-md');
+            if (link.href) {
+                if (link.href === currentUrl || (currentUrl.includes('?') && link.href.includes(window.location.search))) {
+                    link.classList.remove('text-zinc-400');
+                    link.classList.add('text-indigo-400', 'font-black', 'drop-shadow-md');
+                }
+            } else if (link.textContent) {
+                const text = link.textContent.toUpperCase();
+                if ((currentUrl.includes('type=') && text.includes('TYPES')) || (currentUrl.includes('letter=') && text.includes('A-Z'))) {
+                    link.classList.remove('text-zinc-400', 'hover:text-white');
+                    link.classList.add('text-indigo-400', 'font-black', 'drop-shadow-md');
+                }
+            }
+        });
+    } catch (e) {}
 
-    if (!jikanId) {
-        document.getElementById('anime-title').textContent = "No Anime Selected";
-        return;
+    const animeGrid = document.getElementById("anime-grid");
+    const gridHeader = document.getElementById("grid-header");
+    const heroTitle = document.getElementById("hero-title");
+    const heroDesc = document.getElementById("hero-desc");
+    const heroBanner = document.getElementById("hero-banner");
+    const heroPlayBtn = document.getElementById("hero-play-btn");
+    const paginationContainer = document.getElementById("pagination-container");
+    const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
+    let currentApiUrl = "";
+
+    // --- SPOTLIGHT CAROUSEL ---
+    let spotlightData = [];
+    let currentSpotlightIndex = 0;
+    let spotlightInterval = null;
+
+    function initSpotlight(animeList) {
+        if (!animeList || animeList.length === 0) return;
+        spotlightData = animeList.slice(0, 5);
+        currentSpotlightIndex = 0;
+        renderSpotlight();
+        if (spotlightInterval) clearInterval(spotlightInterval);
+        spotlightInterval = setInterval(() => {
+            currentSpotlightIndex = (currentSpotlightIndex + 1) % spotlightData.length;
+            renderSpotlight();
+        }, 7000);
     }
 
-    // --- APIs ---
-    const JIKAN_API = `https://api.jikan.moe/v4/anime/${jikanId}/full`;
-    const CAST_API = `https://api.jikan.moe/v4/anime/${jikanId}/characters`;
-    const CONSUMET_API = `https://api.consumet.org/anime/gogoanime`; 
-
-    // --- GLOBALS ---
-    let animeTitle = "";
-    let episodesLoaded = false;
-    let plyrInstance = null;
-    
-    const videoWrapper = document.getElementById('video-wrapper');
-    const videoElement = document.getElementById('video-element');
-    const placeholder = document.getElementById('player-placeholder');
-    const statusText = document.getElementById('player-status');
-
-    try {
-        // 1. POPULATE UI
-        const [animeRes, castRes] = await Promise.all([fetch(JIKAN_API), fetch(CAST_API)]);
-        if (!animeRes.ok) throw new Error("Anime API rate limit");
+    function renderSpotlight() {
+        const anime = spotlightData[currentSpotlightIndex];
+        if (!anime || !heroTitle) return;
         
-        const animeData = await animeRes.json();
-        const castData = await castRes.json();
-        const anime = animeData.data;
-
-        animeTitle = anime.title_english || anime.title;
-        document.getElementById('anime-title').textContent = animeTitle;
-        document.getElementById('anime-desc').textContent = anime.synopsis || "No synopsis available.";
+        const rankDisplay = document.getElementById("spotlight-rank");
+        if (rankDisplay) rankDisplay.innerHTML = `<span class="text-3xl text-white">#${currentSpotlightIndex + 1}</span> <span class="pt-1">SPOTLIGHT</span>`;
         
-        const cover = document.getElementById('anime-cover');
-        cover.src = anime.images?.jpg?.large_image_url || '';
-        cover.onload = () => cover.classList.remove('hidden');
+        heroTitle.textContent = anime.title;
+        if (heroDesc) {
+            let desc = anime.synopsis || anime.background || "No synopsis overview available yet.";
+            heroDesc.textContent = desc.replace(/\[Written by MAL Rewrite\]/gi, '').trim().substring(0, 200) + "...";
+        }
+        
+        const fallbackImg = anime.trailer?.images?.maximum_image_url || anime.images?.jpg?.large_image_url;
+        if (heroBanner && fallbackImg) heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${fallbackImg}')`;
 
-        const backdropUrl = anime.trailer?.images?.maximum_image_url || anime.images?.jpg?.large_image_url;
-        const backdrop = document.getElementById('backdrop-container');
-        if (backdropUrl) {
-            backdrop.style.backgroundImage = `url('${backdropUrl}')`;
-            backdrop.classList.remove('opacity-0');
-            backdrop.classList.add('opacity-100');
+        if (heroPlayBtn) {
+            heroPlayBtn.classList.remove('hidden');
+            heroPlayBtn.onclick = () => window.location.href = `info.html?id=${anime.mal_id}`;
+        }
+        
+        fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(anime.title)}`)
+            .then(res => res.json())
+            .then(tmdbSearch => {
+                if (tmdbSearch.results?.[0]?.backdrop_path && heroBanner) {
+                    heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('https://image.tmdb.org/t/p/original${tmdbSearch.results[0].backdrop_path}')`;
+                }
+            }).catch(() => {});
+
+        const controls = document.getElementById("spotlight-controls");
+        const mobileControls = document.getElementById("spotlight-controls-mobile");
+        if (controls && mobileControls) {
+            controls.innerHTML = ""; mobileControls.innerHTML = "";
+            spotlightData.forEach((item, index) => {
+                const isActive = index === currentSpotlightIndex;
+                const btn = document.createElement("div");
+                
+                let baseClasses = "cursor-pointer rounded-[14px] overflow-hidden relative flex items-center justify-center group transition-all duration-300 w-14 h-20 md:w-16 md:h-24 shrink-0";
+                if (isActive) btn.className = `${baseClasses} border-[3px] border-indigo-500 scale-110 shadow-[0_0_20px_rgba(99,102,241,0.5)] z-20`;
+                else btn.className = `${baseClasses} border-2 border-zinc-800 opacity-60 hover:opacity-100 hover:border-zinc-600 z-10`;
+
+                btn.innerHTML = `
+                    <div class="absolute inset-0 bg-black/70 transition-all duration-300 z-10 ${isActive ? '!bg-black/0' : 'group-hover:bg-black/40'}"></div>
+                    <img src="${item.images?.jpg?.image_url || ''}" class="absolute inset-0 w-full h-full object-cover z-0">
+                    <span class="relative z-20 font-black text-3xl md:text-4xl text-white drop-shadow-[0_4px_6px_rgba(0,0,0,0.9)] tracking-tighter">${index + 1}</span>
+                `;
+                
+                btn.onclick = () => {
+                    currentSpotlightIndex = index; renderSpotlight();
+                    clearInterval(spotlightInterval);
+                    spotlightInterval = setInterval(() => { currentSpotlightIndex = (currentSpotlightIndex + 1) % spotlightData.length; renderSpotlight(); }, 7000);
+                };
+                controls.appendChild(btn);
+
+                const dot = document.createElement("div");
+                dot.className = `w-2 h-2 rounded-full cursor-pointer transition-all duration-300 ${isActive ? 'bg-indigo-500 w-8' : 'bg-zinc-600'}`;
+                dot.onclick = btn.onclick;
+                mobileControls.appendChild(dot);
+            });
+        }
+    }
+
+    // --- MAIN GRID RENDERER ---
+    function renderGrid(animeList) {
+        if (!animeGrid) return;
+        animeGrid.innerHTML = "";
+        if (!animeList || animeList.length === 0) {
+            animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10">No results found.</p>`;
+            return;
         }
 
-        let badgesHTML = ``;
-        if (anime.score) badgesHTML += `<span class="bg-yellow-500/20 text-yellow-500 px-2.5 py-1 rounded-md border border-yellow-500/30 shadow-sm">★ ${anime.score}</span>`;
-        if (anime.rating) badgesHTML += `<span class="bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-md">${anime.rating.split(' ')[0]}</span>`;
-        if (anime.type) badgesHTML += `<span class="bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-md">${anime.type}</span>`;
-        if (anime.year) badgesHTML += `<span class="bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-md">${anime.year}</span>`;
-        if (anime.status) badgesHTML += `<span class="bg-zinc-800 text-zinc-300 px-2.5 py-1 rounded-md">${anime.status}</span>`;
-        document.getElementById('anime-badges').innerHTML = badgesHTML;
+        const uniqueAnimeList = animeList.filter((anime, index, self) => index === self.findIndex((t) => t.mal_id === anime.mal_id));
 
-        document.getElementById('action-buttons').classList.remove('hidden');
-
-        if (anime.trailer?.embed_url) {
-            document.getElementById('trailer-container').innerHTML = `<iframe src="${anime.trailer.embed_url}?autoplay=0&controls=1&modestbranding=1" class="w-full h-full" frameborder="0" allowfullscreen></iframe>`;
-        }
-
-        const castContainer = document.getElementById('cast-list');
-        castContainer.innerHTML = '';
-        const mainCast = castData.data ? castData.data.slice(0, 4) : [];
-        if (mainCast.length === 0) castContainer.innerHTML = `<p class="text-zinc-600 text-sm font-bold">Cast information unavailable.</p>`;
-        
-        mainCast.forEach(c => {
-            const voiceActor = c.voice_actors?.find(va => va.language === 'Japanese');
-            const vaName = voiceActor ? voiceActor.person.name : "Unknown VA";
-            castContainer.innerHTML += `
-                <div class="flex items-center gap-4 bg-[#151518] border border-zinc-800/50 p-2.5 rounded-xl hover:bg-zinc-800 transition">
-                    <img src="${c.character.images?.jpg?.image_url || ''}" class="w-12 h-12 rounded-lg object-cover shadow-md">
-                    <div class="flex-1 overflow-hidden">
-                        <h4 class="text-sm font-bold text-white truncate">${c.character.name}</h4>
-                        <p class="text-[10px] text-zinc-500 font-bold tracking-wide uppercase mt-0.5">VA: ${vaName}</p>
+        uniqueAnimeList.forEach((anime) => {
+            const wrapper = document.createElement("div");
+            wrapper.className = "relative group cursor-pointer aspect-[2/3] rounded-xl overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-indigo-500 transition-all duration-300 hover:shadow-[0_0_30px_rgba(99,102,241,0.2)] hover:-translate-y-1";
+            const coverImg = anime.images?.jpg?.large_image_url || '';
+            let shortDesc = anime.synopsis ? anime.synopsis.substring(0, 80) + "..." : "No synopsis.";
+            
+            wrapper.innerHTML = `
+                <img src="${coverImg}" alt="${anime.title}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy">
+                
+                <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent flex flex-col justify-end p-3 opacity-100 group-hover:opacity-0 transition-opacity duration-300">
+                    <h3 class="font-bold text-xs md:text-sm line-clamp-1 text-white">${anime.title}</h3>
+                    <p class="text-[10px] text-zinc-400 mt-0.5">★ ${anime.score || 'N/A'} • ${anime.type}</p>
+                </div>
+                
+                <div class="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300 p-4 flex flex-col justify-end">
+                    <h3 class="font-black text-white text-sm line-clamp-2 mb-1">${anime.title}</h3>
+                    <p class="text-[10px] text-indigo-400 font-bold mb-2 tracking-wider uppercase">★ ${anime.score || 'N/A'} • ${anime.type}</p>
+                    <p class="text-[10px] text-zinc-300 line-clamp-3 mb-3 leading-relaxed">${shortDesc}</p>
+                    <div class="w-full bg-indigo-600/90 text-white text-center py-2 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2">
+                        ▶ Play Now
                     </div>
                 </div>
             `;
+            wrapper.addEventListener("click", () => window.location.href = `info.html?id=${anime.mal_id}`);
+            animeGrid.appendChild(wrapper);
         });
-
-    } catch (error) {
-        document.getElementById('anime-title').textContent = "Data Fetch Failed";
     }
 
-    // --- MODAL & EPISODE EXTRACTION LOGIC ---
-    window.openPlayerModal = function() {
-        const modal = document.getElementById('player-modal');
-        modal.classList.remove('hidden');
-        setTimeout(() => modal.classList.remove('opacity-0'), 10);
+    // --- CONTINUE WATCHING RENDERER ---
+    function renderContinueWatching() {
+        const cwSection = document.getElementById('continue-watching-section');
+        const cwGrid = document.getElementById('cw-grid');
+        if (!cwSection || !cwGrid) return;
+        if (window.location.search && !window.location.search.includes('view=home')) return;
 
-        if (!episodesLoaded && animeTitle) {
-            fetchEpisodes();
-        }
-    };
-
-    window.closePlayerModal = function() {
-        const modal = document.getElementById('player-modal');
-        modal.classList.add('opacity-0');
-        
-        // Stop video cleanly
-        if (window.hls) window.hls.destroy();
-        if (plyrInstance) plyrInstance.destroy();
-        plyrInstance = null;
-        videoElement.src = "";
-        
-        // Reset UI to placeholder
-        videoWrapper.classList.add('hidden');
-        placeholder.classList.remove('hidden');
-        statusText.textContent = "Select an episode to start";
-        
-        // Reset button highlights
-        document.querySelectorAll('#episode-list button').forEach(b => {
-            b.classList.remove('bg-[#5a4fcf]', 'text-white', 'border-[#5a4fcf]');
-            b.classList.add('bg-zinc-800/50', 'text-zinc-400', 'border-zinc-800');
-        });
-
-        setTimeout(() => modal.classList.add('hidden'), 300);
-    };
-
-    async function fetchEpisodes() {
-        episodesLoaded = true;
-        const epList = document.getElementById('episode-list');
-
-        try {
-            const encodedTitle = encodeURIComponent(animeTitle);
-            const searchRes = await fetch(`${CONSUMET_API}/${encodedTitle}`);
+        const history = JSON.parse(localStorage.getItem('animeHistory') || '[]');
+        if (history.length > 0) {
+            cwSection.classList.remove('hidden');
+            cwGrid.innerHTML = '';
             
-            if (!searchRes.ok) throw new Error("Rate Limited");
-            const searchData = await searchRes.json();
-
-            if (!searchData.results || searchData.results.length === 0) {
-                epList.innerHTML = `<div class="p-4 text-center text-red-400 text-sm font-bold">No episodes found on server.</div>`;
-                return;
-            }
-
-            const streamingId = searchData.results[0].id;
-            const infoRes = await fetch(`${CONSUMET_API}/info/${streamingId}`);
-            if (!infoRes.ok) throw new Error("Rate Limited");
-            const infoData = await infoRes.json();
-
-            // Update badge
-            const badge = document.getElementById('ep-count-badge');
-            badge.textContent = `${infoData.episodes.length} EPS`;
-            badge.classList.remove('hidden');
-
-            epList.innerHTML = '';
-            infoData.episodes.forEach(ep => {
-                const btn = document.createElement('button');
-                btn.className = "w-full text-left px-4 py-3 bg-zinc-800/50 border border-zinc-800 hover:border-[#5a4fcf] text-zinc-400 hover:text-white transition rounded-xl text-sm font-bold flex items-center justify-between group";
-                btn.innerHTML = `
-                    <span>Episode ${ep.number}</span>
-                    <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-indigo-400" fill="currentColor" viewBox="0 0 24 24"><path d="M7 6v12l10-6z"></path></svg>
+            history.slice(0, 6).forEach(anime => {
+                const progress = Math.floor(Math.random() * (95 - 60 + 1) + 60); 
+                cwGrid.innerHTML += `
+                    <div class="relative group cursor-pointer w-[240px] shrink-0 rounded-xl overflow-hidden border border-zinc-800 hover:border-indigo-500 transition-all duration-300 hover:shadow-[0_0_20px_rgba(99,102,241,0.2)]" onclick="window.location.href='info.html?id=${anime.mal_id}'">
+                        <div class="aspect-video w-full relative">
+                            <img src="${anime.img}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition duration-300">
+                                <div class="bg-white/20 backdrop-blur-md rounded-full p-3 shadow-lg">
+                                    <svg class="w-6 h-6 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M7 6v12l10-6z"></path></svg>
+                                </div>
+                            </div>
+                            <div class="absolute bottom-0 left-0 w-full h-1 bg-zinc-800">
+                                <div class="h-full bg-[#F05A3F]" style="width: ${progress}%"></div>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-[#151518]">
+                            <h3 class="font-bold text-xs text-white truncate">${anime.title}</h3>
+                            <p class="text-[10px] text-zinc-500 mt-0.5">Ep ${Math.floor(Math.random() * 12) + 1} • ${24 - Math.floor((progress/100)*24)}m remaining</p>
+                        </div>
+                    </div>
                 `;
-                btn.onclick = () => loadVideo(ep.id, btn);
-                epList.appendChild(btn);
             });
-
-        } catch (error) {
-            episodesLoaded = false; // allow retry
-            epList.innerHTML = `
-                <div class="p-6 flex flex-col items-center text-center">
-                    <svg class="w-10 h-10 text-red-500/80 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                    <p class="text-zinc-300 text-sm font-bold mb-1">Server Overloaded</p>
-                    <p class="text-zinc-500 text-xs mb-4">The public API blocked the request. Please try again.</p>
-                    <button onclick="fetchEpisodes()" class="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition">Retry Connection</button>
-                </div>
-            `;
         }
     }
 
-    // --- RAW VIDEO PLAYBACK LOGIC ---
-    async function loadVideo(episodeId, activeBtn) {
-        // UI Updates for loading
-        placeholder.classList.remove('hidden');
-        videoWrapper.classList.add('hidden');
-        statusText.textContent = "Connecting to video server...";
+    // --- BENTO BOX DASHBOARD RENDERER ---
+    function buildMiniList(url, containerId) {
+        const container = document.getElementById(containerId);
+        if(!container) return;
         
-        // Destroy old player instance if switching episodes
-        if (window.hls) window.hls.destroy();
-        if (plyrInstance) plyrInstance.destroy();
-
-        // Highlight sidebar button
-        document.querySelectorAll('#episode-list button').forEach(b => {
-            b.classList.remove('bg-[#5a4fcf]', 'text-white', 'border-[#5a4fcf]');
-            b.classList.add('bg-zinc-800/50', 'text-zinc-400', 'border-zinc-800');
-            b.querySelector('svg').classList.add('opacity-0');
-        });
-        activeBtn.classList.remove('bg-zinc-800/50', 'text-zinc-400', 'border-zinc-800');
-        activeBtn.classList.add('bg-[#5a4fcf]', 'text-white', 'border-[#5a4fcf]');
-        activeBtn.querySelector('svg').classList.remove('opacity-0');
-
-        try {
-            const streamRes = await fetch(`${CONSUMET_API}/watch/${episodeId}`);
-            if (!streamRes.ok) throw new Error("Video Blocked");
-            const streamData = await streamRes.json();
-
-            const source = streamData.sources.find(s => s.quality === '1080p' || s.quality === 'auto') || streamData.sources[0];
-
-            // Setup new player
-            plyrInstance = new Plyr(videoElement, {
-                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
+        fetch(url).then(res => res.json()).then(data => {
+            const uniqueList = (data.data || []).filter((anime, index, self) => index === self.findIndex((t) => t.mal_id === anime.mal_id));
+            const list = uniqueList.slice(0, 5); 
+            container.innerHTML = ""; 
+            
+            list.forEach((anime, index) => {
+                const row = document.createElement("div");
+                if (index === 0) {
+                    row.className = "relative rounded-xl overflow-hidden cursor-pointer group border border-zinc-800 hover:border-indigo-500 transition-all shadow-lg";
+                    const bannerImg = anime.trailer?.images?.maximum_image_url || anime.images?.jpg?.large_image_url;
+                    row.innerHTML = `
+                        <div class="w-full aspect-video relative">
+                            <img src="${bannerImg}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#151518] via-black/40 to-transparent"></div>
+                            <div class="absolute bottom-0 left-0 p-4 w-full">
+                                <div class="flex items-center gap-2 text-[10px] font-black text-indigo-400 mb-1 uppercase tracking-widest">
+                                    ★ ${anime.score || 'N/A'} <span>•</span> #1 Trending
+                                </div>
+                                <h4 class="text-base font-black text-white line-clamp-1 group-hover:text-indigo-300 transition">${anime.title}</h4>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    row.className = "flex items-center gap-4 bg-[#151518] p-2.5 rounded-xl cursor-pointer transition-all border border-zinc-800 hover:border-zinc-600 hover:bg-zinc-800/80 group overflow-hidden relative";
+                    row.innerHTML = `
+                        <div class="w-12 h-16 rounded-md overflow-hidden shrink-0 shadow-md">
+                            <img src="${anime.images?.jpg?.image_url}" class="w-full h-full object-cover group-hover:scale-110 transition duration-300">
+                        </div>
+                        <div class="flex-1 overflow-hidden transition-transform duration-300 group-hover:-translate-y-1">
+                            <h4 class="text-sm font-bold text-zinc-200 group-hover:text-white truncate">${anime.title}</h4>
+                            <div class="flex items-center gap-2 mt-1.5 text-[10px] font-bold">
+                                <span class="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-1.5 py-0.5 rounded">${anime.type || 'TV'}</span>
+                                <span class="text-zinc-500">★ ${anime.score || 'N/A'}</span>
+                            </div>
+                        </div>
+                        <div class="absolute right-2 bottom-2 translate-x-12 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 flex items-center gap-1">
+                            <div class="w-7 h-7 rounded-full bg-white text-black flex items-center justify-center hover:scale-110 transition shadow-lg"><svg class="w-3 h-3 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M7 6v12l10-6z"></path></svg></div>
+                        </div>
+                    `;
+                }
+                row.addEventListener("click", () => window.location.href = `info.html?id=${anime.mal_id}`);
+                container.appendChild(row);
             });
-
-            if (Hls.isSupported()) {
-                const hls = new Hls();
-                hls.loadSource(source.url);
-                hls.attachMedia(videoElement);
-                window.hls = hls;
-                
-                hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                    placeholder.classList.add('hidden');
-                    videoWrapper.classList.remove('hidden');
-                    videoElement.play();
-                });
-            } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-                videoElement.src = source.url;
-                videoElement.addEventListener('loadedmetadata', () => {
-                    placeholder.classList.add('hidden');
-                    videoWrapper.classList.remove('hidden');
-                    videoElement.play();
-                });
-            }
-        } catch (error) {
-            statusText.textContent = "Video server rejected connection (Rate Limit).";
-        }
+        }).catch(() => container.innerHTML = `<p class="text-xs text-red-500 py-4 text-center">API Rate Limited.</p>`);
     }
+
+    // --- MASTER FETCH & ROUTING ---
+    function fetchAnimeData(baseApiUrl, page = 1) {
+        currentApiUrl = baseApiUrl; 
+        const separator = baseApiUrl.includes('?') ? '&' : '?';
+        const finalUrl = `${baseApiUrl}${separator}page=${page}`;
+
+        if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10 font-bold tracking-widest uppercase">Loading Page ${page}...</p>`;
+        
+        fetch(finalUrl).then(res => res.ok ? res.json() : Promise.reject()).then(data => {
+            const list = data?.data || [];
+            if (page === 1 && list.length > 0) initSpotlight(list);
+            renderGrid(list);
+            renderPagination(data?.pagination, page);
+        }).catch(() => {
+            if (animeGrid) animeGrid.innerHTML = `<p class="text-red-500 col-span-full text-center py-10 font-bold">API Rate Limit Exceeded.</p>`;
+        });
+    }
+
+    function executeAdvancedSearch(baseQuery = null) {
+        const searchVal = document.getElementById("search-input")?.value.trim();
+        const query = baseQuery || searchVal;
+        const typeEl = document.getElementById('filter-type');
+        const genreEl = document.getElementById('filter-genre');
+        let url = `https://api.jikan.moe/v4/anime?limit=24&sfw`;
+        if (query) url += `&q=${encodeURIComponent(query)}`;
+        if (typeEl?.value) url += `&type=${typeEl.value}`;
+        if (genreEl?.value) url += `&genres=${genreEl.value}`;
+        if (gridHeader) gridHeader.textContent = query ? `Search: "${query}"` : "Filtered Results";
+        fetchAnimeData(url, 1);
+    }
+
+    document.getElementById("search-btn")?.addEventListener("click", (e) => { e.preventDefault(); executeAdvancedSearch(); });
+    document.getElementById("search-input")?.addEventListener("keypress", (e) => { if (e.key === "Enter") { e.preventDefault(); executeAdvancedSearch(); } });
+    document.getElementById('apply-filters-btn')?.addEventListener("click", (e) => { e.preventDefault(); executeAdvancedSearch(); });
+
+    function renderPagination(paginationData, currentPage) {
+        if (!paginationContainer || !paginationData?.last_visible_page || paginationData.last_visible_page <= 1) return paginationContainer.innerHTML = "";
+        let html = "", btnBase = "w-11 h-11 flex items-center justify-center rounded-xl font-bold text-sm cursor-pointer", btnActive = `${btnBase} bg-[#F05A3F] text-white shadow-lg`, btnInactive = `${btnBase} bg-[#151518] border border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white`;
+        let startPage = Math.max(1, currentPage - 2), endPage = Math.min(paginationData.last_visible_page, currentPage + 2);
+        if (currentPage <= 2) endPage = Math.min(5, paginationData.last_visible_page);
+        for (let i = startPage; i <= endPage; i++) html += `<button onclick="window.goToPage(${i})" class="${i === currentPage ? btnActive : btnInactive}">${i}</button>`;
+        paginationContainer.innerHTML = html;
+    }
+    window.goToPage = function(page) { fetchAnimeData(currentApiUrl, page); };
+
+    // --- INITIALIZATION ---
+    renderContinueWatching();
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const params = { q: urlParams.get('q'), view: urlParams.get('view'), type: urlParams.get('type'), genreId: urlParams.get('genre_id'), letter: urlParams.get('letter') };
+
+    if (params.q) executeAdvancedSearch(params.q);
+    else if (params.letter) { gridHeader.textContent = `Starts with "${params.letter === '1' ? '#' : params.letter}"`; fetchAnimeData(`https://api.jikan.moe/v4/anime?letter=${params.letter}&order_by=popularity&sort=asc&limit=24`); }
+    else if (params.genreId) { gridHeader.textContent = `Genre Results`; fetchAnimeData(`https://api.jikan.moe/v4/anime?genres=${params.genreId}&order_by=popularity&sort=asc&limit=24`); }
+    else if (params.type) { gridHeader.textContent = `Top ${params.type.toUpperCase()}`; fetchAnimeData(`https://api.jikan.moe/v4/anime?type=${params.type}&order_by=popularity&sort=desc&limit=24`); }
+    else if (params.view === 'new') { gridHeader.textContent = "Newly Released"; fetchAnimeData("https://api.jikan.moe/v4/seasons/now?limit=24"); }
+    else if (params.view === 'upcoming') { gridHeader.textContent = "Upcoming Releases"; fetchAnimeData("https://api.jikan.moe/v4/seasons/upcoming?limit=24"); }
+    else { gridHeader.textContent = "Trending Now"; fetchAnimeData("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=24"); }
+
+    setTimeout(() => buildMiniList("https://api.jikan.moe/v4/seasons/now?limit=5", "col-airing"), 1000);
+    setTimeout(() => buildMiniList("https://api.jikan.moe/v4/seasons/upcoming?limit=5", "col-upcoming"), 2000);
+    setTimeout(() => buildMiniList("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=5", "col-popular"), 3000);
 });
+
+// --- MODAL ANIMATION & FORMSPREE SUBMISSION CONTROLS ---
+window.openBugModal = function() {
+    const modal = document.getElementById('bug-modal');
+    const content = document.getElementById('bug-modal-content');
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        content.classList.remove('scale-95');
+    }, 10);
+};
+
+window.closeBugModal = function() {
+    const modal = document.getElementById('bug-modal');
+    const content = document.getElementById('bug-modal-content');
+    modal.classList.add('opacity-0');
+    content.classList.add('scale-95');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 300);
+};
+
+// Seamless Formspree Submission (No Redirects)
+const bugForm = document.getElementById('bug-form');
+if (bugForm) {
+    bugForm.addEventListener('submit', function(e) {
+        e.preventDefault(); // Stop normal redirect
+        const formData = new FormData(bugForm);
+        
+        fetch(bugForm.action, {
+            method: 'POST',
+            body: formData,
+            headers: { 'Accept': 'application/json' }
+        }).then(response => {
+            if (response.ok) {
+                alert("Thank you! Your request has been sent successfully.");
+                bugForm.reset();
+                closeBugModal();
+            } else {
+                alert("Oops! There was a problem submitting your request.");
+            }
+        }).catch(error => {
+            alert("Oops! Network error. Please try again later.");
+        });
+    });
+}
