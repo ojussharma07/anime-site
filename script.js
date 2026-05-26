@@ -321,6 +321,14 @@ window.closeBugModal = function() {
     }, 300);
 };
 
+
+const toggle = document.getElementById('theme-toggle');
+toggle.addEventListener('click', () => {
+    document.body.classList.toggle('light-mode');
+    const isLight = document.body.classList.contains('light-mode');
+    document.getElementById('theme-icon').textContent = isLight ? '🌙' : '☀️';
+});
+
 // Seamless Formspree Submission (No Redirects)
 const bugForm = document.getElementById('bug-form');
 if (bugForm) {
