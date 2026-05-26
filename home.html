@@ -40,6 +40,16 @@
                             </div>
                         </div>
                     </div>
+                    <div class="relative group z-50 flex items-center">
+                        <button class="nav-link hover:text-white flex items-center gap-1.5 py-2 transition uppercase">A-Z List <span class="text-[10px]">▼</span></button>
+                        <div class="absolute top-full left-0 pt-4 w-80 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                            <div class="bg-[#09090b] border border-zinc-800 rounded-xl shadow-2xl p-4">
+                                <div id="alpha-index" class="flex flex-wrap gap-1.5"></div>
+                            </div>
+                        </div>
+                    </div> <button id="theme-toggle" class="ml-4 text-xl hover:scale-110 transition-transform focus:outline-none flex items-center justify-center cursor-pointer z-50 relative" title="Toggle Theme">
+                        <span id="theme-icon">☀️</span>
+                    </button>
                 </nav>
             </div>
             
