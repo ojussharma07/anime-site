@@ -24,8 +24,7 @@ A premium, fast, and high-performance cinematic anime directory and portal built
 * **Styling Framework:** Tailwind CSS (Utility-first styling core)
 * **Dynamic Animations:** Custom CSS3 keyframing (Theme shifts, click effects)
 * **Programming Core:** Vanilla JavaScript (ES6+ Asynchronous architecture, Fetch API)
-* **Data Providers:** 
-  * **Jikan API** (Official open-source MyAnimeList data engine)
+* **Data Providers:** * **Jikan API** (Official open-source MyAnimeList data engine)
   * **The Movie Database (TMDB) API** (High-fidelity backdrop media acquisition)
 
 ---
@@ -40,19 +39,17 @@ A premium, fast, and high-performance cinematic anime directory and portal built
 ├── stream.js         # Stream modal processing & server routing engines
 ├── style.css         # Styling rules for theme transitions and ripple effects
 └── terms.html/etc.   # Auxiliary platform documentation pages
-
-
 🚀 Local Setup & Installation
 Since this project leverages a clean, serverless frontend ecosystem, setting it up locally takes seconds.
 
 Clone the repository:
 
-Bash
-   git clone [https://github.com/ojussharma07/anime-site.git](https://github.com/ojussharma07/anime-site.git)
+```Bash
+git clone https://github.com/ojussharma07/anime-site.git```
 Navigate into the directory:
 
-Bash
-   cd anime-site
+```Bash
+cd anime-site```
 Launch the platform:
 
 Simply open index.html inside any modern web browser.
