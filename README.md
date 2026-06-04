@@ -39,22 +39,30 @@ A premium, fast, and high-performance cinematic anime directory and portal built
 ├── stream.js         # Stream modal processing & server routing engines
 ├── style.css         # Styling rules for theme transitions and ripple effects
 └── terms.html/etc.   # Auxiliary platform documentation pages
-🚀 Local Setup & Installation
+```
+
+---
+
+## 🚀 Local Setup & Installation
+
 Since this project leverages a clean, serverless frontend ecosystem, setting it up locally takes seconds.
 
-Clone the repository:
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/ojussharma07/anime-site.git](https://github.com/ojussharma07/anime-site.git)
+   ```
 
-```Bash
-git clone https://github.com/ojussharma07/anime-site.git```
-Navigate into the directory:
+2. **Navigate into the directory:**
+   ```bash
+   cd anime-site
+   ```
 
-```Bash
-cd anime-site```
-Launch the platform:
+3. **Launch the platform:**
+   * Simply open `index.html` inside any modern web browser.
+   * *Alternatively*, run it through a local development server such as the **Live Server** extension in VS Code to ensure smooth path mapping.
 
-Simply open index.html inside any modern web browser.
+---
 
-Alternatively, run it through a local development server such as the Live Server extension in VS Code to ensure smooth path mapping.
+## 📄 License & Disclaimer
 
-📄 License & Disclaimer
 Anime.TV does not parse, store, or host physical media streams on local cloud directories. This program acts strictly as an educational content routing portal interface, pulling structural information and visual banners exclusively from publicly accessible metadata frameworks.
