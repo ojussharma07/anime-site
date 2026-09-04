@@ -29,6 +29,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const paginationContainer = document.getElementById("pagination-container");
     const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
     let currentApiUrl = "";
+    // --- A-Z LIST GENERATOR ---
+    const alphaIndex = document.getElementById("alpha-index");
+    if (alphaIndex) {
+        const letters = "All # A B C D E F G H I J K L M N O P Q R S T U V W X Y Z".split(" ");
+        letters.forEach(char => {
+            const a = document.createElement("a");
+            a.href = char === "All" ? "home.html" : `home.html?letter=${char === '#' ? '1' : char.toLowerCase()}`;
+            a.className = "w-8 h-8 flex items-center justify-center rounded-lg text-xs font-bold bg-[#151518] border border-zinc-800 text-zinc-400 hover:bg-indigo-500 hover:text-white hover:border-indigo-500 transition-all";
+            a.textContent = char;
+            alphaIndex.appendChild(a);
+        });
+    }
 
     // --- SPOTLIGHT CAROUSEL ---
     let spotlightData = [];
