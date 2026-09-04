@@ -59,15 +59,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 7000);
     }
 
-    // We make this an async function to handle our HD Waterfall properly
-    async function renderSpotlight() {
+   async function renderSpotlight() {
         const anime = spotlightData[currentSpotlightIndex];
         if (!anime || !heroTitle) return; 
         
-        // 1. CAPTURE INDEX TO PREVENT RACE CONDITIONS
         const expectedIndex = currentSpotlightIndex;
         
-        // 2. INSTANTLY UPDATE TEXT
         const rankDisplay = document.getElementById("spotlight-rank");
         if (rankDisplay) rankDisplay.innerHTML = `<span class="text-3xl text-white">#${currentSpotlightIndex + 1}</span> <span class="pt-1">SPOTLIGHT</span>`;
         
@@ -82,87 +79,43 @@ document.addEventListener("DOMContentLoaded", () => {
             heroPlayBtn.onclick = () => window.location.href = `info.html?id=${anime.mal_id}`;
         }
 
-        // 3. FIX THE LAG: Instantly clear the old background so they don't mix up.
-        // We try to use the horizontal YouTube thumbnail from Jikan. If missing, we use a dark gradient.
-        // We NEVER use the vertical poster (large_image_url) here to prevent blurry stretching!
-        const instantBg = anime.trailer?.images?.maximum_image_url;
-        if (instantBg && heroBanner) {
-            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.9), rgba(9,9,11,0.4)), url('${instantBg}')`;
-        } else if (heroBanner) {
-            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.95), rgba(9,9,11,0.8))`; 
+        // 1. INSTANT FALLBACK: Use the MAL large image immediately so the screen is never blank
+        const immediateImg = anime.images?.jpg?.large_image_url;
+        if (heroBanner && immediateImg) {
+            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.85), rgba(9,9,11,0.4)), url('${immediateImg}')`;
         }
 
-        // 4. INSTANTLY UPDATE THE BOTTOM NUMBER CONTROLS
         updateSpotlightControls();
 
-        // 5. FIX THE QUALITY: The HD Waterfall (TMDB -> AniList -> Give Up)
+        // 2. BACKGROUND HD UPGRADE: Fetch 4K banner silently
         try {
-            let finalImage = null;
-            
-            // Step A: Check TMDB for 4K Backdrops (using English title for best results)
+            let hdBanner = null;
             const tmdbQuery = anime.title_english || anime.title;
             const tmdbRes = await fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(tmdbQuery)}`);
             const tmdbData = await tmdbRes.json();
             
             if (tmdbData.results?.[0]?.backdrop_path) {
-                finalImage = `https://image.tmdb.org/t/p/original${tmdbData.results[0].backdrop_path}`;
+                hdBanner = `https://image.tmdb.org/t/p/original${tmdbData.results[0].backdrop_path}`;
             } else {
-                // Step B: If TMDB fails, check AniList for their official banner
                 const aniQuery = `query($id:Int){Media(idMal:$id,type:ANIME){bannerImage}}`;
                 const aniRes = await fetch('https://graphql.anilist.co', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify({ query: aniQuery, variables: { id: anime.mal_id } })
                 });
                 const aniData = await aniRes.json();
                 if (aniData?.data?.Media?.bannerImage) {
-                    finalImage = aniData.data.Media.bannerImage;
+                    hdBanner = aniData.data.Media.bannerImage;
                 }
             }
 
-            // Step C: Apply the 4K image ONLY if the user hasn't clicked to another slide yet
-            if (finalImage && heroBanner && currentSpotlightIndex === expectedIndex) {
-                heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${finalImage}')`;
+            // Apply the HD upgrade only if the user is still on this slide
+            if (hdBanner && heroBanner && currentSpotlightIndex === expectedIndex) {
+                heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${hdBanner}')`;
             }
         } catch (e) {
-            console.log("HD Image Fetch Failed for:", anime.title);
+            // If HD fetch fails, it keeps the immediate fallback image safely in place
         }
-    }
-
-    // Extracted the controls into their own clean function so they can update instantly
-    function updateSpotlightControls() {
-        const controls = document.getElementById("spotlight-controls");
-        const mobileControls = document.getElementById("spotlight-controls-mobile");
-        if (!controls || !mobileControls) return;
-        
-        controls.innerHTML = ""; mobileControls.innerHTML = "";
-        spotlightData.forEach((item, index) => {
-            const isActive = index === currentSpotlightIndex;
-            const btn = document.createElement("div");
-            
-            let baseClasses = "cursor-pointer rounded-[14px] overflow-hidden relative flex items-center justify-center group transition-all duration-300 w-14 h-20 md:w-16 md:h-24 shrink-0";
-            if (isActive) btn.className = `${baseClasses} border-[3px] border-indigo-500 scale-110 shadow-[0_0_20px_rgba(99,102,241,0.5)] z-20`;
-            else btn.className = `${baseClasses} border-2 border-zinc-800 opacity-60 hover:opacity-100 hover:border-zinc-600 z-10`;
-
-            btn.innerHTML = `
-                <div class="absolute inset-0 bg-black/70 transition-all duration-300 z-10 ${isActive ? '!bg-black/0' : 'group-hover:bg-black/40'}"></div>
-                <img src="${item.images?.jpg?.image_url || ''}" class="absolute inset-0 w-full h-full object-cover z-0">
-                <span class="relative z-20 font-black text-3xl md:text-4xl text-white drop-shadow-[0_4px_6px_rgba(0,0,0,0.9)] tracking-tighter">${index + 1}</span>
-            `;
-            
-            btn.onclick = () => {
-                currentSpotlightIndex = index; 
-                renderSpotlight();
-                clearInterval(spotlightInterval);
-                spotlightInterval = setInterval(() => { currentSpotlightIndex = (currentSpotlightIndex + 1) % spotlightData.length; renderSpotlight(); }, 7000);
-            };
-            controls.appendChild(btn);
-
-            const dot = document.createElement("div");
-            dot.className = `w-2 h-2 rounded-full cursor-pointer transition-all duration-300 ${isActive ? 'bg-indigo-500 w-8' : 'bg-zinc-600'}`;
-            dot.onclick = btn.onclick;
-            mobileControls.appendChild(dot);
-        });
     }
 
     // --- MAIN GRID RENDERER ---
