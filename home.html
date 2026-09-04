@@ -52,11 +52,19 @@
                     </button>
                     <input type="text" id="search-input" placeholder="Search anime" class="flex-1 bg-transparent text-sm text-white focus:outline-none placeholder-zinc-500 w-full font-medium tracking-wide">
                     
-                    <div class="relative group z-50 flex items-center pl-3 border-l border-zinc-700 ml-2 h-6">
-                        <button class="flex items-center gap-1.5 text-white font-bold text-sm tracking-wide hover:text-indigo-400 transition uppercase">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 4a1 1 0 011-1h16a1 1 0 01.74 1.673l-7.116 8.041A2 2 0 0013 14.228V20a1 1 0 01-1.447.894l-4-2A1 1 0 017 18v-3.772a2 2 0 00-.624-1.486L3.26 5.673A1 1 0 013 4z"/></svg>
-                            FILTER
-                        </button>
+                    <div class="flex items-center gap-4 ml-auto"> 
+    
+    <!-- YOUR EXISTING SEARCH BAR CODE GOES HERE -->
+    <form class="relative ..."> 
+        <input type="text" placeholder="Search anime" ...>
+    </form>
+
+    <!-- THE THEME BUTTON GOES RIGHT NEXT TO IT -->
+    <button id="theme-toggle" class="text-xl hover:scale-110 transition-transform focus:outline-none flex items-center justify-center cursor-pointer z-50 shrink-0">
+        <span id="theme-icon">☀️</span>
+    </button>
+
+</div>
                         <div class="absolute top-full right-0 pt-6 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                             <div class="bg-[#151518] border border-zinc-800 rounded-xl shadow-2xl p-4 flex flex-col gap-3 cursor-default" onclick="event.preventDefault();">
                                 <p class="text-xs font-black text-zinc-500 uppercase tracking-widest border-b border-zinc-800 pb-2">Advanced Filters</p>
