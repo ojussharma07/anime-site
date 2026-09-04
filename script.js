@@ -63,6 +63,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const anime = spotlightData[currentSpotlightIndex];
         if (!anime || !heroTitle) return; 
         
+        // 1. CAPTURE THE CURRENT INDEX TO PREVENT RACE CONDITIONS
+        const expectedIndex = currentSpotlightIndex;
+        
         const rankDisplay = document.getElementById("spotlight-rank");
         if (rankDisplay) rankDisplay.innerHTML = `<span class="text-3xl text-white">#${currentSpotlightIndex + 1}</span> <span class="pt-1">SPOTLIGHT</span>`;
         
@@ -72,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
             heroDesc.textContent = desc.replace(/\[Written by MAL Rewrite\]/gi, '').trim().substring(0, 200) + "...";
         }
         
-        // 1. Initial Fallback: Uses the best available image while HD loads
+        // Initial Fallback
         const fallbackImg = anime.trailer?.images?.maximum_image_url || anime.images?.jpg?.large_image_url;
         if (heroBanner && fallbackImg) {
             heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.9), rgba(9,9,11,0.4)), url('${fallbackImg}')`;
@@ -83,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
             heroPlayBtn.onclick = () => window.location.href = `info.html?id=${anime.mal_id}`;
         }
         
-        // 2. The HD Upgrade: Fetch 4K Anime Banners via AniList using the exact MAL ID
+        // Fetch 4K Anime Banners via AniList
         const aniListQuery = `
         query ($idMal: Int) {
             Media (idMal: $idMal, type: ANIME) {
@@ -98,6 +101,9 @@ document.addEventListener("DOMContentLoaded", () => {
         })
         .then(res => res.json())
         .then(data => {
+            // 2. THE FIX: If the carousel moved while we were waiting, discard this image!
+            if (currentSpotlightIndex !== expectedIndex) return;
+            
             const hdBanner = data?.data?.Media?.bannerImage;
             if (hdBanner && heroBanner) {
                 heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${hdBanner}')`;
