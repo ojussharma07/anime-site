@@ -31,30 +31,30 @@ body.light-mode {
     color: #333333 !important;
 }
 
-/* 2. Containers / Cards (Header, Footer, Modals, Bento Boxes) */
+/* 2. Containers / Cards (Header, Footer, Hero, Bento Boxes) */
+/* Wildcard selection instantly catches all dark Tailwind classes */
 body.light-mode header,
 body.light-mode footer,
-body.light-mode .bg-\\[\\#151518\\],
-body.light-mode .bg-\\[\\#09090b\\],
-body.light-mode .bg-zinc-900,
-body.light-mode #bug-modal-content {
+body.light-mode #hero-banner,
+body.light-mode #bug-modal-content,
+body.light-mode [class*="bg-[#151518]"],
+body.light-mode [class*="bg-[#09090b]"],
+body.light-mode [class*="bg-zinc-900"],
+body.light-mode [class*="bg-zinc-800"] {
     background-color: #E8E8E8 !important;
 }
 
 /* 3. Borders / Dividers */
 body.light-mode header,
 body.light-mode footer,
-body.light-mode .border-zinc-800,
-body.light-mode .border-zinc-900 {
+body.light-mode [class*="border-zinc-800"],
+body.light-mode [class*="border-zinc-900"] {
     border-color: #D3D3D3 !important;
-    border-right-color: #D3D3D3 !important;
-    border-left-color: #D3D3D3 !important;
-    border-top-color: #D3D3D3 !important;
-    border-bottom-color: #D3D3D3 !important;
 }
 
-/* 4. Main Text Overrides (Fixing invisible white text) */
-body.light-mode .text-white,
+/* 4. Main Text Overrides */
+body.light-mode [class*="text-white"],
+body.light-mode [class*="text-zinc-100"],
 body.light-mode h1,
 body.light-mode h2,
 body.light-mode h3 {
@@ -62,9 +62,9 @@ body.light-mode h3 {
 }
 
 /* 5. Muted Text / Icons */
-body.light-mode .text-zinc-300,
-body.light-mode .text-zinc-400,
-body.light-mode .text-zinc-500 {
+body.light-mode [class*="text-zinc-300"],
+body.light-mode [class*="text-zinc-400"],
+body.light-mode [class*="text-zinc-500"] {
     color: #808080 !important;
 }
 
@@ -72,22 +72,19 @@ body.light-mode .text-zinc-500 {
 body.light-mode input,
 body.light-mode select,
 body.light-mode textarea {
-    background-color: #E0E0E0 !important; 
+    background-color: transparent !important; 
     color: #333333 !important;
 }
-
 body.light-mode input::placeholder,
 body.light-mode textarea::placeholder {
     color: #808080 !important;
 }
 
-/* 7. Hero Banner Gradient Fix */
-body.light-mode .from-\\[\\#09090b\\] {
-    --tw-gradient-from: #F5F5F5 !important;
+/* 7. Hero Banner Gradient Fixes */
+/* Overwrites the pitch-black overlays with soft gray gradients */
+body.light-mode #hero-banner .bg-gradient-to-t {
+    background: linear-gradient(to top, #F5F5F5, rgba(245, 245, 245, 0.7), transparent) !important;
 }
-body.light-mode .via-\\[\\#09090b\\]\\/70,
-body.light-mode .via-\\[\\#09090b\\]\\/60,
-body.light-mode .via-black\\/20,
-body.light-mode .via-black\\/40 {
-    --tw-gradient-stops: var(--tw-gradient-from), #F5F5F5CC, transparent !important;
+body.light-mode #hero-banner .bg-gradient-to-r {
+    background: linear-gradient(to right, #F5F5F5, rgba(245, 245, 245, 0.6), transparent) !important;
 }
