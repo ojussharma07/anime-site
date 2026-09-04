@@ -295,9 +295,9 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (params.view === 'upcoming') { gridHeader.textContent = "Upcoming Releases"; fetchAnimeData("https://api.jikan.moe/v4/seasons/upcoming?limit=24"); }
     else { gridHeader.textContent = "Trending Now"; fetchAnimeData("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=24"); }
 
-    setTimeout(() => buildMiniList("https://api.jikan.moe/v4/seasons/now?limit=5", "col-airing"), 1000);
-    setTimeout(() => buildMiniList("https://api.jikan.moe/v4/seasons/upcoming?limit=5", "col-upcoming"), 2000);
-    setTimeout(() => buildMiniList("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=5", "col-popular"), 3000);
+    setTimeout(() => buildMiniList("https://api.jikan.moe/v4/seasons/now?limit=5", "col-airing"), 1500);
+    setTimeout(() => buildMiniList("https://api.jikan.moe/v4/seasons/upcoming?limit=5", "col-upcoming"), 3000);
+    setTimeout(() => buildMiniList("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=5", "col-popular"), 4500);
 });
 
 // --- MODAL ANIMATION & FORMSPREE SUBMISSION CONTROLS ---
