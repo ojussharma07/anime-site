@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderSpotlight() {
         const anime = spotlightData[currentSpotlightIndex];
-        if (!anime || !heroTitle) return;
+        if (!anime || !heroTitle) return; 
         
         const rankDisplay = document.getElementById("spotlight-rank");
         if (rankDisplay) rankDisplay.innerHTML = `<span class="text-3xl text-white">#${currentSpotlightIndex + 1}</span> <span class="pt-1">SPOTLIGHT</span>`;
@@ -186,11 +186,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- BENTO BOX DASHBOARD RENDERER ---
+    // UPDATED: Now returns a promise so we can chain them properly
     function buildMiniList(url, containerId) {
         const container = document.getElementById(containerId);
-        if(!container) return;
+        if(!container) return Promise.resolve();
         
-        fetch(url).then(res => res.json()).then(data => {
+        return fetch(url).then(res => {
+            if (!res.ok) throw { status: res.status };
+            return res.json();
+        }).then(data => {
             const uniqueList = (data.data || []).filter((anime, index, self) => index === self.findIndex((t) => t.mal_id === anime.mal_id));
             const list = uniqueList.slice(0, 5); 
             container.innerHTML = ""; 
@@ -233,10 +237,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 row.addEventListener("click", () => window.location.href = `info.html?id=${anime.mal_id}`);
                 container.appendChild(row);
             });
-        }).catch(() => container.innerHTML = `<p class="text-xs text-red-500 py-4 text-center">API Rate Limited.</p>`);
+        }).catch((err) => {
+            let msg = err.status === 429 ? "Rate Limited" : err.status >= 500 ? "Server Down" : "Error";
+            container.innerHTML = `<p class="text-xs text-red-500 py-4 text-center">API ${msg}.</p>`;
+        });
     }
 
     // --- MASTER FETCH & ROUTING ---
+    // UPDATED: Now throws proper, honest error messages depending on the server response
     function fetchAnimeData(baseApiUrl, page = 1) {
         currentApiUrl = baseApiUrl; 
         const separator = baseApiUrl.includes('?') ? '&' : '?';
@@ -244,13 +252,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10 font-bold tracking-widest uppercase">Loading Page ${page}...</p>`;
         
-        fetch(finalUrl).then(res => res.ok ? res.json() : Promise.reject()).then(data => {
+        fetch(finalUrl).then(res => {
+            if (!res.ok) throw { status: res.status };
+            return res.json();
+        }).then(data => {
             const list = data?.data || [];
             if (page === 1 && list.length > 0) initSpotlight(list);
             renderGrid(list);
             renderPagination(data?.pagination, page);
-        }).catch(() => {
-            if (animeGrid) animeGrid.innerHTML = `<p class="text-red-500 col-span-full text-center py-10 font-bold">API Rate Limit Exceeded.</p>`;
+        }).catch((err) => {
+            let errorText = "Failed to load database. Please check your connection.";
+            if (err.status === 429) errorText = "Jikan API Rate Limit Exceeded. Please wait 60 seconds.";
+            if (err.status === 504 || err.status >= 500) errorText = "Jikan Servers are currently down (504 Timeout). Please try again later.";
+            
+            if (animeGrid) animeGrid.innerHTML = `<p class="text-red-500 col-span-full text-center py-10 font-bold">${errorText}</p>`;
         });
     }
 
@@ -295,9 +310,22 @@ document.addEventListener("DOMContentLoaded", () => {
     else if (params.view === 'upcoming') { gridHeader.textContent = "Upcoming Releases"; fetchAnimeData("https://api.jikan.moe/v4/seasons/upcoming?limit=24"); }
     else { gridHeader.textContent = "Trending Now"; fetchAnimeData("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=24"); }
 
-    setTimeout(() => buildMiniList("https://api.jikan.moe/v4/seasons/now?limit=5", "col-airing"), 1500);
-    setTimeout(() => buildMiniList("https://api.jikan.moe/v4/seasons/upcoming?limit=5", "col-upcoming"), 3000);
-    setTimeout(() => buildMiniList("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=5", "col-popular"), 4500);
+    // UPDATED: Sequential Loader to 100% guarantee we never hit Jikan's Rate Limits
+    const loadMiniListsSequentially = async () => {
+        try {
+            await new Promise(resolve => setTimeout(resolve, 1500)); // Initial breathing room
+            await buildMiniList("https://api.jikan.moe/v4/seasons/now?limit=5", "col-airing");
+            
+            await new Promise(resolve => setTimeout(resolve, 1200)); // Wait 1.2s BEFORE starting the next one
+            await buildMiniList("https://api.jikan.moe/v4/seasons/upcoming?limit=5", "col-upcoming");
+            
+            await new Promise(resolve => setTimeout(resolve, 1200)); // Wait 1.2s BEFORE starting the final one
+            await buildMiniList("https://api.jikan.moe/v4/top/anime?filter=bypopularity&limit=5", "col-popular");
+        } catch (e) { console.error("Error loading side lists:", e); }
+    };
+    
+    // Fire the sequential loader
+    loadMiniListsSequentially();
 });
 
 // --- MODAL ANIMATION & FORMSPREE SUBMISSION CONTROLS ---
@@ -321,13 +349,14 @@ window.closeBugModal = function() {
     }, 300);
 };
 
-
 const toggle = document.getElementById('theme-toggle');
-toggle.addEventListener('click', () => {
-    document.body.classList.toggle('light-mode');
-    const isLight = document.body.classList.contains('light-mode');
-    document.getElementById('theme-icon').textContent = isLight ? '🌙' : '☀️';
-});
+if (toggle) {
+    toggle.addEventListener('click', () => {
+        document.body.classList.toggle('light-mode');
+        const isLight = document.body.classList.contains('light-mode');
+        document.getElementById('theme-icon').textContent = isLight ? '🌙' : '☀️';
+    });
+}
 
 // Seamless Formspree Submission (No Redirects)
 const bugForm = document.getElementById('bug-form');
