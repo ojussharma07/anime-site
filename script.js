@@ -256,11 +256,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- MASTER FETCH & ROUTING ---
-    // UPDATED: Now throws proper, honest error messages depending on the server response
     function fetchAnimeData(baseApiUrl, page = 1) {
         currentApiUrl = baseApiUrl; 
-        const separator = baseApiUrl.includes('?') ? '&' : '?';
-        const finalUrl = `${baseApiUrl}${separator}page=${page}`;
+        
+        // FIX 1: Only append page number if > 1. This prevents cache-busting the main URL.
+        let finalUrl = baseApiUrl;
+        if (page > 1) {
+            const separator = baseApiUrl.includes('?') ? '&' : '?';
+            finalUrl = `${baseApiUrl}${separator}page=${page}`;
+        }
 
         if (animeGrid) animeGrid.innerHTML = `<p class="text-zinc-500 col-span-full text-center py-10 font-bold tracking-widest uppercase">Loading Page ${page}...</p>`;
         
@@ -286,7 +290,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const query = baseQuery || searchVal;
         const typeEl = document.getElementById('filter-type');
         const genreEl = document.getElementById('filter-genre');
-        let url = `https://api.jikan.moe/v4/anime?limit=24&sfw`;
+        
+        // FIX 2: Stripped custom limiters
+        let url = `https://api.jikan.moe/v4/anime?sfw`;
         if (query) url += `&q=${encodeURIComponent(query)}`;
         if (typeEl?.value) url += `&type=${typeEl.value}`;
         if (genreEl?.value) url += `&genres=${genreEl.value}`;
@@ -314,32 +320,34 @@ document.addEventListener("DOMContentLoaded", () => {
     const urlParams = new URLSearchParams(window.location.search);
     const params = { q: urlParams.get('q'), view: urlParams.get('view'), type: urlParams.get('type'), genreId: urlParams.get('genre_id'), letter: urlParams.get('letter') };
 
+    // FIX 3: Stripped all limit parameters from default routing so they match the cached URLs exactly
     if (params.q) executeAdvancedSearch(params.q);
-    else if (params.letter) { gridHeader.textContent = `Starts with "${params.letter === '1' ? '#' : params.letter}"`; fetchAnimeData(`https://api.jikan.moe/v4/anime?letter=${params.letter}&order_by=popularity&sort=asc&limit=24`); }
-    else if (params.genreId) { gridHeader.textContent = `Genre Results`; fetchAnimeData(`https://api.jikan.moe/v4/anime?genres=${params.genreId}&order_by=popularity&sort=asc&limit=24`); }
-    else if (params.type) { gridHeader.textContent = `Top ${params.type.toUpperCase()}`; fetchAnimeData(`https://api.jikan.moe/v4/anime?type=${params.type}&order_by=popularity&sort=desc&limit=24`); }
-    else if (params.view === 'new') { gridHeader.textContent = "Newly Released"; fetchAnimeData("https://api.jikan.moe/v4/seasons/now?limit=24"); }
-    else if (params.view === 'upcoming') { gridHeader.textContent = "Upcoming Releases"; fetchAnimeData("https://api.jikan.moe/v4/seasons/upcoming?limit=24"); }
-    // FIX 1: Removed the heavy '?filter=bypopularity' string from the main grid load
-    else { gridHeader.textContent = "Trending Now"; fetchAnimeData("https://api.jikan.moe/v4/top/anime?limit=24"); }
+    else if (params.letter) { gridHeader.textContent = `Starts with "${params.letter === '1' ? '#' : params.letter}"`; fetchAnimeData(`https://api.jikan.moe/v4/anime?letter=${params.letter}&order_by=popularity&sort=asc`); }
+    else if (params.genreId) { gridHeader.textContent = `Genre Results`; fetchAnimeData(`https://api.jikan.moe/v4/anime?genres=${params.genreId}&order_by=popularity&sort=asc`); }
+    else if (params.type) { gridHeader.textContent = `Top ${params.type.toUpperCase()}`; fetchAnimeData(`https://api.jikan.moe/v4/anime?type=${params.type}&order_by=popularity&sort=desc`); }
+    else if (params.view === 'new') { gridHeader.textContent = "Newly Released"; fetchAnimeData("https://api.jikan.moe/v4/seasons/now"); }
+    else if (params.view === 'upcoming') { gridHeader.textContent = "Upcoming Releases"; fetchAnimeData("https://api.jikan.moe/v4/seasons/upcoming"); }
+    else { gridHeader.textContent = "Trending Now"; fetchAnimeData("https://api.jikan.moe/v4/top/anime"); }
 
     const loadMiniListsSequentially = async () => {
         try {
             await new Promise(resolve => setTimeout(resolve, 1500)); 
-            await buildMiniList("https://api.jikan.moe/v4/seasons/now?limit=5", "col-airing");
+            
+            // FIX 4: Stripped limit=5 from the mini-lists
+            await buildMiniList("https://api.jikan.moe/v4/seasons/now", "col-airing");
             
             await new Promise(resolve => setTimeout(resolve, 1200)); 
-            // FIX 2: Simplified upcoming query
-            await buildMiniList("https://api.jikan.moe/v4/seasons/upcoming?limit=5", "col-upcoming");
+            await buildMiniList("https://api.jikan.moe/v4/seasons/upcoming", "col-upcoming");
             
             await new Promise(resolve => setTimeout(resolve, 1200)); 
-            // FIX 3: Removed the heavy '?filter=bypopularity' string from the mini list
-            await buildMiniList("https://api.jikan.moe/v4/top/anime?type=tv&limit=5", "col-popular");
+            await buildMiniList("https://api.jikan.moe/v4/top/anime", "col-popular");
         } catch (e) { console.error("Error loading side lists:", e); }
     };
     
     loadMiniListsSequentially();
 });
+
+    
 
 // --- MODAL ANIMATION & FORMSPREE SUBMISSION CONTROLS ---
 window.openBugModal = function() {
