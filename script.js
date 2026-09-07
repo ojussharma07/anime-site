@@ -64,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const anime = spotlightData[currentSpotlightIndex];
         if (!anime || !heroTitle) return;
         
-        // FIX 1: Lock the index so TMDB doesn't overwrite the wrong slide when it finishes loading
+        // FIX 1: Lock the index to prevent race conditions if the user clicks fast
         const expectedIndex = currentSpotlightIndex;
         
         const rankDisplay = document.getElementById("spotlight-rank");
@@ -76,35 +76,24 @@ document.addEventListener("DOMContentLoaded", () => {
             heroDesc.textContent = desc.replace(/\[Written by MAL Rewrite\]/gi, '').trim().substring(0, 200) + "...";
         }
         
-        // INSTANT RENDER (No black screens, this is your original working code)
-        const fallbackImg = anime.trailer?.images?.maximum_image_url || anime.images?.jpg?.large_image_url;
-        if (heroBanner && fallbackImg) {
-            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${fallbackImg}')`;
-        }
+        // FIX 2: Added the 'large' trailer image as an extra fallback to avoid vertical stretching
+        const fallbackImg = anime.trailer?.images?.maximum_image_url || anime.trailer?.images?.large_image_url || anime.images?.jpg?.large_image_url;
+        if (heroBanner && fallbackImg) heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${fallbackImg}')`;
 
         if (heroPlayBtn) {
             heroPlayBtn.classList.remove('hidden');
             heroPlayBtn.onclick = () => window.location.href = `info.html?id=${anime.mal_id}`;
         }
         
-        // FIX 2: Use the English title to search TMDB so it actually finds the correct anime
+        // FIX 3: Search TMDB with the English title to guarantee it finds the 4K backdrop
         const tmdbQuery = anime.title_english || anime.title;
         
         fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(tmdbQuery)}`)
             .then(res => res.json())
             .then(tmdbSearch => {
-                if (tmdbSearch.results?.[0]?.backdrop_path) {
-                    const hdUrl = `https://image.tmdb.org/t/p/original${tmdbSearch.results[0].backdrop_path}`;
-                    
-                    // FIX 3: Load the HD image silently in the background before applying it (stops flickering)
-                    const img = new Image();
-                    img.src = hdUrl;
-                    img.onload = () => {
-                        // Only apply the 4K image if the user is STILL on this exact slide
-                        if (currentSpotlightIndex === expectedIndex && heroBanner) {
-                            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${hdUrl}')`;
-                        }
-                    };
+                // Ensure we only apply the TMDB image if the carousel hasn't moved on
+                if (tmdbSearch.results?.[0]?.backdrop_path && heroBanner && currentSpotlightIndex === expectedIndex) {
+                    heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('https://image.tmdb.org/t/p/original${tmdbSearch.results[0].backdrop_path}')`;
                 }
             }).catch(() => {});
 
