@@ -82,28 +82,50 @@ document.addEventListener("DOMContentLoaded", () => {
 
         updateSpotlightControls();
 
-        // FIX: The 16:9 Trailer Thumbnail prevents aspect ratio stretching and loads instantly with zero flicker.
+        // 1. ABSOLUTE GUARANTEE: Never leave the screen black. Apply the standard MAL poster instantly.
+        // We use a darker gradient here so the stretching/blur is hidden.
+        const safeFallback = anime.images?.jpg?.large_image_url || '';
+        if (heroBanner) {
+            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.95), rgba(9,9,11,0.6)), url('${safeFallback}')`;
+        }
+
+        // 2. ATTEMPT HD UPGRADE: Look for the 16:9 Trailer image first.
         const hdTrailer = anime.trailer?.images?.maximum_image_url;
         
-        if (hdTrailer && heroBanner) {
-            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${hdTrailer}')`;
-        } else if (heroBanner) {
-            // If no trailer exists (rare), gracefully fetch TMDB in the background
-            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.95), rgba(9,9,11,0.8))`;
+        if (hdTrailer) {
+            const img = new Image();
+            img.src = hdTrailer;
+            img.onload = () => {
+                if (currentSpotlightIndex === expectedIndex && heroBanner) {
+                    heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${hdTrailer}')`;
+                }
+            };
+        } else {
+            // 3. LAST RESORT: If no trailer exists (like Steins;Gate), grab the AniList banner.
             try {
-                const tmdbQuery = anime.title_english || anime.title;
-                const tmdbRes = await fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(tmdbQuery)}`);
-                const tmdbData = await tmdbRes.json();
+                const aniQuery = `query($id:Int){Media(idMal:$id,type:ANIME){bannerImage}}`;
+                const aniRes = await fetch('https://graphql.anilist.co', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ query: aniQuery, variables: { id: anime.mal_id } })
+                });
+                const aniData = await aniRes.json();
+                const aniBanner = aniData?.data?.Media?.bannerImage;
                 
-                if (tmdbData.results?.[0]?.backdrop_path && currentSpotlightIndex === expectedIndex) {
-                    const hdBanner = `https://image.tmdb.org/t/p/original${tmdbData.results[0].backdrop_path}`;
-                    heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${hdBanner}')`;
-                } else if (currentSpotlightIndex === expectedIndex) {
-                    heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.9), rgba(9,9,11,0.5)), url('${anime.images?.jpg?.large_image_url}')`;
+                if (aniBanner) {
+                    const img = new Image();
+                    img.src = aniBanner;
+                    img.onload = () => {
+                        if (currentSpotlightIndex === expectedIndex && heroBanner) {
+                            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${aniBanner}')`;
+                        }
+                    };
                 }
             } catch (e) {}
         }
     }
+ 
+ 
 
     function updateSpotlightControls() {
         const controls = document.getElementById("spotlight-controls");
