@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- SPOTLIGHT CAROUSEL (THE PRE-LOADER UPGRADE) ---
+    // --- SPOTLIGHT CAROUSEL ---
     let spotlightData = [];
     let currentSpotlightIndex = 0;
     let spotlightInterval = null;
@@ -51,64 +51,19 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!animeList || animeList.length === 0) return;
         spotlightData = animeList.slice(0, 5);
         currentSpotlightIndex = 0;
-        
-        // 1. Instantly render the first slide with whatever assets Jikan provided
         renderSpotlight();
-        
         if (spotlightInterval) clearInterval(spotlightInterval);
         spotlightInterval = setInterval(() => {
             currentSpotlightIndex = (currentSpotlightIndex + 1) % spotlightData.length;
             renderSpotlight();
         }, 7000);
-
-        // 2. BATCH PRE-FETCH: Grab all 5 AniList 4K banners in a single network request
-        const ids = spotlightData.map(a => a.mal_id);
-        const query = `
-            query ($in: [Int]) {
-                Page {
-                    media(idMal_in: $in, type: ANIME) {
-                        idMal
-                        bannerImage
-                    }
-                }
-            }
-        `;
-        
-        fetch('https://graphql.anilist.co', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-            body: JSON.stringify({ query, variables: { in: ids } })
-        })
-        .then(res => res.json())
-        .then(data => {
-            const mediaList = data?.data?.Page?.media || [];
-            
-            // Map the 4K banners directly into our local objects
-            mediaList.forEach(media => {
-                if (media.bannerImage) {
-                    const anime = spotlightData.find(a => a.mal_id === media.idMal);
-                    if (anime) {
-                        anime.anilistBanner = media.bannerImage;
-                        
-                        // Force the browser to cache the image silently in the background
-                        const img = new Image();
-                        img.src = media.bannerImage;
-                        
-                        // If the current slide just finished caching its 4K upgrade, re-render it
-                        img.onload = () => {
-                            if (spotlightData[currentSpotlightIndex].mal_id === media.idMal) {
-                                renderSpotlight();
-                            }
-                        };
-                    }
-                }
-            });
-        }).catch(err => console.log("AniList Prefetch Failed"));
     }
 
-    function renderSpotlight() {
+    async function renderSpotlight() {
         const anime = spotlightData[currentSpotlightIndex];
         if (!anime || !heroTitle) return; 
+        
+        const expectedIndex = currentSpotlightIndex;
         
         const rankDisplay = document.getElementById("spotlight-rank");
         if (rankDisplay) rankDisplay.innerHTML = `<span class="text-3xl text-white">#${currentSpotlightIndex + 1}</span> <span class="pt-1">SPOTLIGHT</span>`;
@@ -124,14 +79,52 @@ document.addEventListener("DOMContentLoaded", () => {
             heroPlayBtn.onclick = () => window.location.href = `info.html?id=${anime.mal_id}`;
         }
 
-        // 3. ZERO ASYNC LOGIC: Instantly pick the highest quality pre-loaded image available
-        const bestImage = anime.anilistBanner || anime.trailer?.images?.maximum_image_url || anime.images?.jpg?.large_image_url || '';
+        updateSpotlightControls();
+
+        // 1. INSTANT CINEMATIC BACKGROUND
+        const gradientOverlay = `linear-gradient(to top, #09090b 5%, rgba(9,9,11,0.6) 60%, rgba(9,9,11,0.1) 100%)`;
+        const verticalFallback = anime.images?.jpg?.large_image_url || '';
         
-        if (heroBanner && bestImage) {
-            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${bestImage}')`;
+        if (heroBanner) {
+            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.95), rgba(9,9,11,0.7)), url('${verticalFallback}')`;
         }
 
-        updateSpotlightControls();
+        // 2. THE NEW HD WATERFALL (TMDB Removed Completely)
+        const hdTrailer = anime.trailer?.images?.maximum_image_url || anime.trailer?.images?.large_image_url;
+        
+        if (hdTrailer) {
+            const img = new Image();
+            img.src = hdTrailer;
+            img.onload = () => {
+                if (currentSpotlightIndex === expectedIndex && heroBanner) {
+                    heroBanner.style.backgroundImage = `${gradientOverlay}, url('${hdTrailer}')`;
+                }
+            };
+        } else {
+            // Backup: AniList GraphQL Banner
+            try {
+                const aniQuery = `query($id:Int){Media(idMal:$id,type:ANIME){bannerImage}}`;
+                const aniRes = await fetch('https://graphql.anilist.co', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ query: aniQuery, variables: { id: anime.mal_id } })
+                });
+                const aniData = await aniRes.json();
+                const aniBanner = aniData?.data?.Media?.bannerImage;
+                
+                if (aniBanner) {
+                    const img = new Image();
+                    img.src = aniBanner;
+                    img.onload = () => {
+                        if (currentSpotlightIndex === expectedIndex && heroBanner) {
+                            heroBanner.style.backgroundImage = `${gradientOverlay}, url('${aniBanner}')`;
+                        }
+                    };
+                }
+            } catch (e) {
+                console.log("AniList fetch failed");
+            }
+        }
     }
 
     function updateSpotlightControls() {
@@ -274,6 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <h4 class="text-base font-black text-white line-clamp-1 group-hover:text-indigo-300 transition">${anime.title}</h4>
                             </div>
                         </div>
+                    </div>
                     `;
                 } else {
                     row.className = "flex items-center gap-4 bg-[#151518] p-2.5 rounded-xl cursor-pointer transition-all border border-zinc-800 hover:border-zinc-600 hover:bg-zinc-800/80 group overflow-hidden relative";
