@@ -27,7 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const heroBanner = document.getElementById("hero-banner");
     const heroPlayBtn = document.getElementById("hero-play-btn");
     const paginationContainer = document.getElementById("pagination-container");
-    const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
     let currentApiUrl = "";
 
     // --- A-Z LIST GENERATOR ---
@@ -47,6 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let spotlightData = [];
     let currentSpotlightIndex = 0;
     let spotlightInterval = null;
+    let activeSpotlightMalId = null; // NEW: Strict ID lock to prevent all race conditions
 
     function initSpotlight(animeList) {
         if (!animeList || animeList.length === 0) return;
@@ -64,10 +64,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const anime = spotlightData[currentSpotlightIndex];
         if (!anime || !heroTitle) return; 
         
-        // 1. CAPTURE INDEX TO PREVENT RACE CONDITIONS
-        const expectedIndex = currentSpotlightIndex;
+        // 1. LOCK THE RENDER TO THIS EXACT ANIME ID
+        const currentMalId = anime.mal_id;
+        activeSpotlightMalId = currentMalId;
         
-        // 2. INSTANTLY UPDATE TEXT
         const rankDisplay = document.getElementById("spotlight-rank");
         if (rankDisplay) rankDisplay.innerHTML = `<span class="text-3xl text-white">#${currentSpotlightIndex + 1}</span> <span class="pt-1">SPOTLIGHT</span>`;
         
@@ -82,18 +82,15 @@ document.addEventListener("DOMContentLoaded", () => {
             heroPlayBtn.onclick = () => window.location.href = `info.html?id=${anime.mal_id}`;
         }
 
-        // 3. INSTANT FALLBACK: Trailer thumbnail (horizontal) or MAL poster (vertical). 
+        // 2. INSTANT FALLBACK: Trailer thumbnail (horizontal) or MAL poster (vertical). 
         const fallbackImg = anime.trailer?.images?.maximum_image_url || anime.images?.jpg?.large_image_url;
         if (heroBanner && fallbackImg) {
             heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.9), rgba(9,9,11,0.5)), url('${fallbackImg}')`;
         }
 
-        // 4. INSTANTLY UPDATE THE BOTTOM NUMBER CONTROLS
         updateSpotlightControls();
 
-        // 5. HD WATERFALL: AniList (Primary) -> TMDB (Backup)
-        let hdBanner = null;
-
+        // 3. HD WATERFALL: ONLY AniList is allowed. TMDB is removed to prevent wrong images.
         try {
             const aniQuery = `query($id:Int){Media(idMal:$id,type:ANIME){bannerImage}}`;
             const aniRes = await fetch('https://graphql.anilist.co', {
@@ -102,29 +99,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: JSON.stringify({ query: aniQuery, variables: { id: anime.mal_id } })
             });
             const aniData = await aniRes.json();
-            if (aniData?.data?.Media?.bannerImage) hdBanner = aniData.data.Media.bannerImage;
-        } catch (e) { console.log("AniList fetch failed"); }
+            const hdBanner = aniData?.data?.Media?.bannerImage;
 
-        if (!hdBanner) {
-            try {
-                const tmdbQuery = anime.title_english || anime.title;
-                const tmdbRes = await fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(tmdbQuery)}`);
-                const tmdbData = await tmdbRes.json();
-                if (tmdbData.results?.[0]?.backdrop_path) {
-                    hdBanner = `https://image.tmdb.org/t/p/original${tmdbData.results[0].backdrop_path}`;
-                }
-            } catch (e) { console.log("TMDB fetch failed"); }
-        }
-
-        // 6. SMOOTH UPGRADE: Pre-load the HD image before applying it
-        if (hdBanner && currentSpotlightIndex === expectedIndex) {
-            const img = new Image();
-            img.src = hdBanner;
-            img.onload = () => {
-                if (currentSpotlightIndex === expectedIndex && heroBanner) {
-                    heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${hdBanner}')`;
-                }
-            };
+            // 4. SMOOTH UPGRADE: Only apply if the screen is still showing THIS EXACT anime
+            if (hdBanner && activeSpotlightMalId === currentMalId) {
+                const img = new Image();
+                img.src = hdBanner;
+                img.onload = () => {
+                    if (activeSpotlightMalId === currentMalId && heroBanner) {
+                        heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${hdBanner}')`;
+                    }
+                };
+            }
+        } catch (e) { 
+            console.log("HD Banner fetch failed, keeping fallback."); 
         }
     }
 
