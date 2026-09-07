@@ -60,11 +60,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 7000);
     }
 
-    async function renderSpotlight() {
+function renderSpotlight() {
         const anime = spotlightData[currentSpotlightIndex];
-        if (!anime || !heroTitle) return; 
-        
-        const expectedIndex = currentSpotlightIndex;
+        if (!anime || !heroTitle) return;
         
         const rankDisplay = document.getElementById("spotlight-rank");
         if (rankDisplay) rankDisplay.innerHTML = `<span class="text-3xl text-white">#${currentSpotlightIndex + 1}</span> <span class="pt-1">SPOTLIGHT</span>`;
@@ -75,92 +73,55 @@ document.addEventListener("DOMContentLoaded", () => {
             heroDesc.textContent = desc.replace(/\[Written by MAL Rewrite\]/gi, '').trim().substring(0, 200) + "...";
         }
         
+        const fallbackImg = anime.trailer?.images?.maximum_image_url || anime.images?.jpg?.large_image_url;
+        if (heroBanner && fallbackImg) heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${fallbackImg}')`;
+
         if (heroPlayBtn) {
             heroPlayBtn.classList.remove('hidden');
             heroPlayBtn.onclick = () => window.location.href = `info.html?id=${anime.mal_id}`;
         }
-
-        updateSpotlightControls();
-
-        // 1. ABSOLUTE GUARANTEE: Never leave the screen black. Apply the standard MAL poster instantly.
-        // We use a darker gradient here so the stretching/blur is hidden.
-        const safeFallback = anime.images?.jpg?.large_image_url || '';
-        if (heroBanner) {
-            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.95), rgba(9,9,11,0.6)), url('${safeFallback}')`;
-        }
-
-        // 2. ATTEMPT HD UPGRADE: Look for the 16:9 Trailer image first.
-        const hdTrailer = anime.trailer?.images?.maximum_image_url;
         
-        if (hdTrailer) {
-            const img = new Image();
-            img.src = hdTrailer;
-            img.onload = () => {
-                if (currentSpotlightIndex === expectedIndex && heroBanner) {
-                    heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${hdTrailer}')`;
+        fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(anime.title)}`)
+            .then(res => res.json())
+            .then(tmdbSearch => {
+                if (tmdbSearch.results?.[0]?.backdrop_path && heroBanner) {
+                    heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('https://image.tmdb.org/t/p/original${tmdbSearch.results[0].backdrop_path}')`;
                 }
-            };
-        } else {
-            // 3. LAST RESORT: If no trailer exists (like Steins;Gate), grab the AniList banner.
-            try {
-                const aniQuery = `query($id:Int){Media(idMal:$id,type:ANIME){bannerImage}}`;
-                const aniRes = await fetch('https://graphql.anilist.co', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify({ query: aniQuery, variables: { id: anime.mal_id } })
-                });
-                const aniData = await aniRes.json();
-                const aniBanner = aniData?.data?.Media?.bannerImage;
-                
-                if (aniBanner) {
-                    const img = new Image();
-                    img.src = aniBanner;
-                    img.onload = () => {
-                        if (currentSpotlightIndex === expectedIndex && heroBanner) {
-                            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${aniBanner}')`;
-                        }
-                    };
-                }
-            } catch (e) {}
-        }
-    }
- 
- 
+            }).catch(() => {});
 
-    function updateSpotlightControls() {
         const controls = document.getElementById("spotlight-controls");
         const mobileControls = document.getElementById("spotlight-controls-mobile");
-        if (!controls || !mobileControls) return;
-        
-        controls.innerHTML = ""; mobileControls.innerHTML = "";
-        spotlightData.forEach((item, index) => {
-            const isActive = index === currentSpotlightIndex;
-            const btn = document.createElement("div");
-            
-            let baseClasses = "cursor-pointer rounded-[14px] overflow-hidden relative flex items-center justify-center group transition-all duration-300 w-14 h-20 md:w-16 md:h-24 shrink-0";
-            if (isActive) btn.className = `${baseClasses} border-[3px] border-indigo-500 scale-110 shadow-[0_0_20px_rgba(99,102,241,0.5)] z-20`;
-            else btn.className = `${baseClasses} border-2 border-zinc-800 opacity-60 hover:opacity-100 hover:border-zinc-600 z-10`;
+        if (controls && mobileControls) {
+            controls.innerHTML = ""; mobileControls.innerHTML = "";
+            spotlightData.forEach((item, index) => {
+                const isActive = index === currentSpotlightIndex;
+                const btn = document.createElement("div");
+                
+                let baseClasses = "cursor-pointer rounded-[14px] overflow-hidden relative flex items-center justify-center group transition-all duration-300 w-14 h-20 md:w-16 md:h-24 shrink-0";
+                if (isActive) btn.className = `${baseClasses} border-[3px] border-indigo-500 scale-110 shadow-[0_0_20px_rgba(99,102,241,0.5)] z-20`;
+                else btn.className = `${baseClasses} border-2 border-zinc-800 opacity-60 hover:opacity-100 hover:border-zinc-600 z-10`;
 
-            btn.innerHTML = `
-                <div class="absolute inset-0 bg-black/70 transition-all duration-300 z-10 ${isActive ? '!bg-black/0' : 'group-hover:bg-black/40'}"></div>
-                <img src="${item.images?.jpg?.image_url || ''}" class="absolute inset-0 w-full h-full object-cover z-0">
-                <span class="relative z-20 font-black text-3xl md:text-4xl text-white drop-shadow-[0_4px_6px_rgba(0,0,0,0.9)] tracking-tighter">${index + 1}</span>
-            `;
-            
-            btn.onclick = () => {
-                currentSpotlightIndex = index; 
-                renderSpotlight();
-                clearInterval(spotlightInterval);
-                spotlightInterval = setInterval(() => { currentSpotlightIndex = (currentSpotlightIndex + 1) % spotlightData.length; renderSpotlight(); }, 7000);
-            };
-            controls.appendChild(btn);
+                btn.innerHTML = `
+                    <div class="absolute inset-0 bg-black/70 transition-all duration-300 z-10 ${isActive ? '!bg-black/0' : 'group-hover:bg-black/40'}"></div>
+                    <img src="${item.images?.jpg?.image_url || ''}" class="absolute inset-0 w-full h-full object-cover z-0">
+                    <span class="relative z-20 font-black text-3xl md:text-4xl text-white drop-shadow-[0_4px_6px_rgba(0,0,0,0.9)] tracking-tighter">${index + 1}</span>
+                `;
+                
+                btn.onclick = () => {
+                    currentSpotlightIndex = index; renderSpotlight();
+                    clearInterval(spotlightInterval);
+                    spotlightInterval = setInterval(() => { currentSpotlightIndex = (currentSpotlightIndex + 1) % spotlightData.length; renderSpotlight(); }, 7000);
+                };
+                controls.appendChild(btn);
 
-            const dot = document.createElement("div");
-            dot.className = `w-2 h-2 rounded-full cursor-pointer transition-all duration-300 ${isActive ? 'bg-indigo-500 w-8' : 'bg-zinc-600'}`;
-            dot.onclick = btn.onclick;
-            mobileControls.appendChild(dot);
-        });
+                const dot = document.createElement("div");
+                dot.className = `w-2 h-2 rounded-full cursor-pointer transition-all duration-300 ${isActive ? 'bg-indigo-500 w-8' : 'bg-zinc-600'}`;
+                dot.onclick = btn.onclick;
+                mobileControls.appendChild(dot);
+            });
+        }
     }
+
 
     // --- MAIN GRID RENDERER ---
     function renderGrid(animeList) {
