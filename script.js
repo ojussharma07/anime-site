@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const heroBanner = document.getElementById("hero-banner");
     const heroPlayBtn = document.getElementById("hero-play-btn");
     const paginationContainer = document.getElementById("pagination-container");
+    const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
     let currentApiUrl = "";
 
     // --- A-Z LIST GENERATOR ---
@@ -46,7 +47,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let spotlightData = [];
     let currentSpotlightIndex = 0;
     let spotlightInterval = null;
-    let activeSpotlightMalId = null; // NEW: Strict ID lock to prevent all race conditions
 
     function initSpotlight(animeList) {
         if (!animeList || animeList.length === 0) return;
@@ -64,9 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const anime = spotlightData[currentSpotlightIndex];
         if (!anime || !heroTitle) return; 
         
-        // 1. LOCK THE RENDER TO THIS EXACT ANIME ID
-        const currentMalId = anime.mal_id;
-        activeSpotlightMalId = currentMalId;
+        const expectedIndex = currentSpotlightIndex;
         
         const rankDisplay = document.getElementById("spotlight-rank");
         if (rankDisplay) rankDisplay.innerHTML = `<span class="text-3xl text-white">#${currentSpotlightIndex + 1}</span> <span class="pt-1">SPOTLIGHT</span>`;
@@ -82,41 +80,28 @@ document.addEventListener("DOMContentLoaded", () => {
             heroPlayBtn.onclick = () => window.location.href = `info.html?id=${anime.mal_id}`;
         }
 
-        // 2. INSTANT FALLBACK: Trailer thumbnail (horizontal) or MAL poster (vertical). 
-        const fallbackImg = anime.trailer?.images?.maximum_image_url || anime.images?.jpg?.large_image_url;
-        if (heroBanner && fallbackImg) {
-            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.9), rgba(9,9,11,0.5)), url('${fallbackImg}')`;
-        }
-
         updateSpotlightControls();
 
-        // 3. CONSISTENT WATERFALL: Prioritize Trailer Image, fallback to AniList
-        try {
-            let hdBanner = anime.trailer?.images?.maximum_image_url; 
-            
-            if (!hdBanner) {
-                const aniQuery = `query($id:Int){Media(idMal:$id,type:ANIME){bannerImage}}`;
-                const aniRes = await fetch('https://graphql.anilist.co', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify({ query: aniQuery, variables: { id: anime.mal_id } })
-                });
-                const aniData = await aniRes.json();
-                hdBanner = aniData?.data?.Media?.bannerImage;
-            }
-
-            // 4. SMOOTH UPGRADE: Only apply if the screen is still showing THIS EXACT anime
-            if (hdBanner && activeSpotlightMalId === currentMalId) {
-                const img = new Image();
-                img.src = hdBanner;
-                img.onload = () => {
-                    if (activeSpotlightMalId === currentMalId && heroBanner) {
-                        heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${hdBanner}')`;
-                    }
-                };
-            }
-        } catch (e) { 
-            console.log("HD Banner fetch failed, keeping fallback."); 
+        // FIX: The 16:9 Trailer Thumbnail prevents aspect ratio stretching and loads instantly with zero flicker.
+        const hdTrailer = anime.trailer?.images?.maximum_image_url;
+        
+        if (hdTrailer && heroBanner) {
+            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${hdTrailer}')`;
+        } else if (heroBanner) {
+            // If no trailer exists (rare), gracefully fetch TMDB in the background
+            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.95), rgba(9,9,11,0.8))`;
+            try {
+                const tmdbQuery = anime.title_english || anime.title;
+                const tmdbRes = await fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(tmdbQuery)}`);
+                const tmdbData = await tmdbRes.json();
+                
+                if (tmdbData.results?.[0]?.backdrop_path && currentSpotlightIndex === expectedIndex) {
+                    const hdBanner = `https://image.tmdb.org/t/p/original${tmdbData.results[0].backdrop_path}`;
+                    heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${hdBanner}')`;
+                } else if (currentSpotlightIndex === expectedIndex) {
+                    heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.9), rgba(9,9,11,0.5)), url('${anime.images?.jpg?.large_image_url}')`;
+                }
+            } catch (e) {}
         }
     }
 
@@ -409,7 +394,7 @@ if (toggle) {
 const bugForm = document.getElementById('bug-form');
 if (bugForm) {
     bugForm.addEventListener('submit', function(e) {
-        e.preventDefault(); // Stop normal redirect
+        e.preventDefault(); 
         const formData = new FormData(bugForm);
         
         fetch(bugForm.action, {
