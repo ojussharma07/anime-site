@@ -90,16 +90,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
         updateSpotlightControls();
 
-        // 3. HD WATERFALL: ONLY AniList is allowed. TMDB is removed to prevent wrong images.
+        // 3. CONSISTENT WATERFALL: Prioritize Trailer Image, fallback to AniList
         try {
-            const aniQuery = `query($id:Int){Media(idMal:$id,type:ANIME){bannerImage}}`;
-            const aniRes = await fetch('https://graphql.anilist.co', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({ query: aniQuery, variables: { id: anime.mal_id } })
-            });
-            const aniData = await aniRes.json();
-            const hdBanner = aniData?.data?.Media?.bannerImage;
+            let hdBanner = anime.trailer?.images?.maximum_image_url; 
+            
+            if (!hdBanner) {
+                const aniQuery = `query($id:Int){Media(idMal:$id,type:ANIME){bannerImage}}`;
+                const aniRes = await fetch('https://graphql.anilist.co', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ query: aniQuery, variables: { id: anime.mal_id } })
+                });
+                const aniData = await aniRes.json();
+                hdBanner = aniData?.data?.Media?.bannerImage;
+            }
 
             // 4. SMOOTH UPGRADE: Only apply if the screen is still showing THIS EXACT anime
             if (hdBanner && activeSpotlightMalId === currentMalId) {
