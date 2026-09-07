@@ -27,7 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const heroBanner = document.getElementById("hero-banner");
     const heroPlayBtn = document.getElementById("hero-play-btn");
     const paginationContainer = document.getElementById("pagination-container");
-    const TMDB_API_KEY = '9d2f021af5279eb029c4eb58a080dbd3';
     let currentApiUrl = "";
 
     // --- A-Z LIST GENERATOR ---
@@ -60,11 +59,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 7000);
     }
 
-    function renderSpotlight() {
+    async function renderSpotlight() {
         const anime = spotlightData[currentSpotlightIndex];
-        if (!anime || !heroTitle) return;
+        if (!anime || !heroTitle) return; 
         
-        // FIX 1: Lock the index to prevent race conditions if the user clicks fast
         const expectedIndex = currentSpotlightIndex;
         
         const rankDisplay = document.getElementById("spotlight-rank");
@@ -76,58 +74,92 @@ document.addEventListener("DOMContentLoaded", () => {
             heroDesc.textContent = desc.replace(/\[Written by MAL Rewrite\]/gi, '').trim().substring(0, 200) + "...";
         }
         
-        // FIX 2: Added the 'large' trailer image as an extra fallback to avoid vertical stretching
-        const fallbackImg = anime.trailer?.images?.maximum_image_url || anime.trailer?.images?.large_image_url || anime.images?.jpg?.large_image_url;
-        if (heroBanner && fallbackImg) heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${fallbackImg}')`;
-
         if (heroPlayBtn) {
             heroPlayBtn.classList.remove('hidden');
             heroPlayBtn.onclick = () => window.location.href = `info.html?id=${anime.mal_id}`;
         }
-        
-        // FIX 3: Search TMDB with the English title to guarantee it finds the 4K backdrop
-        const tmdbQuery = anime.title_english || anime.title;
-        
-        fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(tmdbQuery)}`)
-            .then(res => res.json())
-            .then(tmdbSearch => {
-                // Ensure we only apply the TMDB image if the carousel hasn't moved on
-                if (tmdbSearch.results?.[0]?.backdrop_path && heroBanner && currentSpotlightIndex === expectedIndex) {
-                    heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('https://image.tmdb.org/t/p/original${tmdbSearch.results[0].backdrop_path}')`;
-                }
-            }).catch(() => {});
 
+        updateSpotlightControls();
+
+        // 1. INSTANT CINEMATIC BACKGROUND
+        const gradientOverlay = `linear-gradient(to top, #09090b 5%, rgba(9,9,11,0.6) 60%, rgba(9,9,11,0.1) 100%)`;
+        const verticalFallback = anime.images?.jpg?.large_image_url || '';
+        
+        if (heroBanner) {
+            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.95), rgba(9,9,11,0.7)), url('${verticalFallback}')`;
+        }
+
+        // 2. THE NEW HD WATERFALL (TMDB Removed Completely)
+        const hdTrailer = anime.trailer?.images?.maximum_image_url || anime.trailer?.images?.large_image_url;
+        
+        if (hdTrailer) {
+            const img = new Image();
+            img.src = hdTrailer;
+            img.onload = () => {
+                if (currentSpotlightIndex === expectedIndex && heroBanner) {
+                    heroBanner.style.backgroundImage = `${gradientOverlay}, url('${hdTrailer}')`;
+                }
+            };
+        } else {
+            // Backup: AniList GraphQL Banner
+            try {
+                const aniQuery = `query($id:Int){Media(idMal:$id,type:ANIME){bannerImage}}`;
+                const aniRes = await fetch('https://graphql.anilist.co', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ query: aniQuery, variables: { id: anime.mal_id } })
+                });
+                const aniData = await aniRes.json();
+                const aniBanner = aniData?.data?.Media?.bannerImage;
+                
+                if (aniBanner) {
+                    const img = new Image();
+                    img.src = aniBanner;
+                    img.onload = () => {
+                        if (currentSpotlightIndex === expectedIndex && heroBanner) {
+                            heroBanner.style.backgroundImage = `${gradientOverlay}, url('${aniBanner}')`;
+                        }
+                    };
+                }
+            } catch (e) {
+                console.log("AniList fetch failed");
+            }
+        }
+    }
+
+    function updateSpotlightControls() {
         const controls = document.getElementById("spotlight-controls");
         const mobileControls = document.getElementById("spotlight-controls-mobile");
-        if (controls && mobileControls) {
-            controls.innerHTML = ""; mobileControls.innerHTML = "";
-            spotlightData.forEach((item, index) => {
-                const isActive = index === currentSpotlightIndex;
-                const btn = document.createElement("div");
-                
-                let baseClasses = "cursor-pointer rounded-[14px] overflow-hidden relative flex items-center justify-center group transition-all duration-300 w-14 h-20 md:w-16 md:h-24 shrink-0";
-                if (isActive) btn.className = `${baseClasses} border-[3px] border-indigo-500 scale-110 shadow-[0_0_20px_rgba(99,102,241,0.5)] z-20`;
-                else btn.className = `${baseClasses} border-2 border-zinc-800 opacity-60 hover:opacity-100 hover:border-zinc-600 z-10`;
+        if (!controls || !mobileControls) return;
+        
+        controls.innerHTML = ""; mobileControls.innerHTML = "";
+        spotlightData.forEach((item, index) => {
+            const isActive = index === currentSpotlightIndex;
+            const btn = document.createElement("div");
+            
+            let baseClasses = "cursor-pointer rounded-[14px] overflow-hidden relative flex items-center justify-center group transition-all duration-300 w-14 h-20 md:w-16 md:h-24 shrink-0";
+            if (isActive) btn.className = `${baseClasses} border-[3px] border-indigo-500 scale-110 shadow-[0_0_20px_rgba(99,102,241,0.5)] z-20`;
+            else btn.className = `${baseClasses} border-2 border-zinc-800 opacity-60 hover:opacity-100 hover:border-zinc-600 z-10`;
 
-                btn.innerHTML = `
-                    <div class="absolute inset-0 bg-black/70 transition-all duration-300 z-10 ${isActive ? '!bg-black/0' : 'group-hover:bg-black/40'}"></div>
-                    <img src="${item.images?.jpg?.image_url || ''}" class="absolute inset-0 w-full h-full object-cover z-0">
-                    <span class="relative z-20 font-black text-3xl md:text-4xl text-white drop-shadow-[0_4px_6px_rgba(0,0,0,0.9)] tracking-tighter">${index + 1}</span>
-                `;
-                
-                btn.onclick = () => {
-                    currentSpotlightIndex = index; renderSpotlight();
-                    clearInterval(spotlightInterval);
-                    spotlightInterval = setInterval(() => { currentSpotlightIndex = (currentSpotlightIndex + 1) % spotlightData.length; renderSpotlight(); }, 7000);
-                };
-                controls.appendChild(btn);
+            btn.innerHTML = `
+                <div class="absolute inset-0 bg-black/70 transition-all duration-300 z-10 ${isActive ? '!bg-black/0' : 'group-hover:bg-black/40'}"></div>
+                <img src="${item.images?.jpg?.image_url || ''}" class="absolute inset-0 w-full h-full object-cover z-0">
+                <span class="relative z-20 font-black text-3xl md:text-4xl text-white drop-shadow-[0_4px_6px_rgba(0,0,0,0.9)] tracking-tighter">${index + 1}</span>
+            `;
+            
+            btn.onclick = () => {
+                currentSpotlightIndex = index; 
+                renderSpotlight();
+                clearInterval(spotlightInterval);
+                spotlightInterval = setInterval(() => { currentSpotlightIndex = (currentSpotlightIndex + 1) % spotlightData.length; renderSpotlight(); }, 7000);
+            };
+            controls.appendChild(btn);
 
-                const dot = document.createElement("div");
-                dot.className = `w-2 h-2 rounded-full cursor-pointer transition-all duration-300 ${isActive ? 'bg-indigo-500 w-8' : 'bg-zinc-600'}`;
-                dot.onclick = btn.onclick;
-                mobileControls.appendChild(dot);
-            });
-        }
+            const dot = document.createElement("div");
+            dot.className = `w-2 h-2 rounded-full cursor-pointer transition-all duration-300 ${isActive ? 'bg-indigo-500 w-8' : 'bg-zinc-600'}`;
+            dot.onclick = btn.onclick;
+            mobileControls.appendChild(dot);
+        });
     }
 
     // --- MAIN GRID RENDERER ---
@@ -235,6 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
                                 <h4 class="text-base font-black text-white line-clamp-1 group-hover:text-indigo-300 transition">${anime.title}</h4>
                             </div>
                         </div>
+                    </div>
                     `;
                 } else {
                     row.className = "flex items-center gap-4 bg-[#151518] p-2.5 rounded-xl cursor-pointer transition-all border border-zinc-800 hover:border-zinc-600 hover:bg-zinc-800/80 group overflow-hidden relative";
