@@ -60,9 +60,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 7000);
     }
 
-function renderSpotlight() {
+    function renderSpotlight() {
         const anime = spotlightData[currentSpotlightIndex];
         if (!anime || !heroTitle) return;
+        
+        // FIX 1: Lock the index so TMDB doesn't overwrite the wrong slide when it finishes loading
+        const expectedIndex = currentSpotlightIndex;
         
         const rankDisplay = document.getElementById("spotlight-rank");
         if (rankDisplay) rankDisplay.innerHTML = `<span class="text-3xl text-white">#${currentSpotlightIndex + 1}</span> <span class="pt-1">SPOTLIGHT</span>`;
@@ -73,19 +76,35 @@ function renderSpotlight() {
             heroDesc.textContent = desc.replace(/\[Written by MAL Rewrite\]/gi, '').trim().substring(0, 200) + "...";
         }
         
+        // INSTANT RENDER (No black screens, this is your original working code)
         const fallbackImg = anime.trailer?.images?.maximum_image_url || anime.images?.jpg?.large_image_url;
-        if (heroBanner && fallbackImg) heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${fallbackImg}')`;
+        if (heroBanner && fallbackImg) {
+            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${fallbackImg}')`;
+        }
 
         if (heroPlayBtn) {
             heroPlayBtn.classList.remove('hidden');
             heroPlayBtn.onclick = () => window.location.href = `info.html?id=${anime.mal_id}`;
         }
         
-        fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(anime.title)}`)
+        // FIX 2: Use the English title to search TMDB so it actually finds the correct anime
+        const tmdbQuery = anime.title_english || anime.title;
+        
+        fetch(`https://api.themoviedb.org/3/search/tv?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(tmdbQuery)}`)
             .then(res => res.json())
             .then(tmdbSearch => {
-                if (tmdbSearch.results?.[0]?.backdrop_path && heroBanner) {
-                    heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('https://image.tmdb.org/t/p/original${tmdbSearch.results[0].backdrop_path}')`;
+                if (tmdbSearch.results?.[0]?.backdrop_path) {
+                    const hdUrl = `https://image.tmdb.org/t/p/original${tmdbSearch.results[0].backdrop_path}`;
+                    
+                    // FIX 3: Load the HD image silently in the background before applying it (stops flickering)
+                    const img = new Image();
+                    img.src = hdUrl;
+                    img.onload = () => {
+                        // Only apply the 4K image if the user is STILL on this exact slide
+                        if (currentSpotlightIndex === expectedIndex && heroBanner) {
+                            heroBanner.style.backgroundImage = `linear-gradient(to top, #09090b, rgba(9,9,11,0.8), rgba(9,9,11,0.2)), url('${hdUrl}')`;
+                        }
+                    };
                 }
             }).catch(() => {});
 
@@ -121,7 +140,6 @@ function renderSpotlight() {
             });
         }
     }
-
 
     // --- MAIN GRID RENDERER ---
     function renderGrid(animeList) {
